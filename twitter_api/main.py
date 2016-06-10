@@ -54,7 +54,10 @@ def _check_login():
                WHERE access_token=?;'''
     cursor = g.db.execute(query, (str(request.json['access_token']),))
     results = cursor.fetchone()
-    return results
+    if results:
+        return results
+    else:
+        abort(401)
     
 def _get_existing_user_data(username):
     # Obtain existing data from user DB
@@ -176,26 +179,23 @@ def update_profile():
     
     # Check if user is logged in. (user_id, access_token)
     (user_id, db_token) = _check_login()
-    username = _get_username_from_userid(user_id)
-    if db_token:
-        # Obtain existing data from user DB
-        (user_id, fn, ln, dob) = _get_existing_user_data(username)
+    
+    # Verify that all required fields are supplied, and update the db
+    if all(_ in request.json for _ in {'first_name', 'last_name', 'birth_date'}):
         
         # Update new values in DB for those provided.
         query = '''UPDATE user 
                 SET first_name=?, last_name=?, birth_date=? 
                 WHERE id=?;'''
-        fn = request.json['first_name'] or fn
-        ln = request.json['last_name'] or ln
-        dob = request.json['birth_date'] or dob
+        fn = request.json['first_name']
+        ln = request.json['last_name']
+        dob = request.json['birth_date']
         g.db.execute(query, (fn, ln, dob, user_id))
         g.db.commit()
         
         # 201 - Success
         return Response(status=201) 
-    else:
-        # 401 - Missing acces token, invalid access
-        return Response(status=401) 
+    
     # 400 - Missing requirement, not json
     return Response(status=400) 
 
