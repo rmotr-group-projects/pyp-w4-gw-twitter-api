@@ -9,11 +9,8 @@ JSON_MIME_TYPE = 'application/json'
 def auth_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # implement your logic here
-        
-        # this is used if they are doing a POST request
-        # check the json of the request to get the access token
-        # then see if that access token exists in the auth table
+        # check json of POST request to get access token
+        # see if that access token exists in the auth table
         client_data = request.get_json()
         try:
             post_access_token = client_data['access_token']
@@ -33,8 +30,6 @@ def auth_only(f):
 def json_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # implement your logic here
-        
         # check if POST request is mimetype of application/json
         # get_json returns None if not json
         if request.get_json() is None:
