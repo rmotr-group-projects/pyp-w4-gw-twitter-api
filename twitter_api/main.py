@@ -166,7 +166,6 @@ def not_found(e):
 @app.route('/profile/<username>')
 def profile(username):
 
-    #profile_json_data = None
     sql_command1 = 'SELECT id, username, first_name, last_name, birth_date FROM user WHERE username = ?'
     user_db_data = g.db.execute(sql_command1, [username])
     user_data = user_db_data.fetchone()
