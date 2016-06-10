@@ -99,14 +99,18 @@ def logout():
     
 @app.route('/tweet/<tweet_id>')
 def get_tweet(tweet_id):
-    tweet_id, user_id, created, content = _get_tweet_info(tweet_id)
+    # get all the tweet info as well as username from user table
+    sql_command = '''SELECT t.*, u.username FROM tweet as t 
+                    INNER JOIN user as u ON t.user_id=u.id 
+                    WHERE t.id = ?'''
+    result_cursor = g.db.execute(sql_command, [tweet_id])
+    result_tuple = result_cursor.fetchone()
+    if not result_tuple:
+        abort(404)
+        
+    tweet_id, user_id, created, content, username = result_tuple
     uri = url_for('get_tweet', tweet_id = tweet_id) # good note from Santiago
 
-    # get the username of who made that tweet
-    sql_command = 'SELECT username FROM user WHERE id = ?'
-    user_cursor = g.db.execute(sql_command, [user_id])
-    user_tuple = user_cursor.fetchone()
-    username = user_tuple[0]
     profile = url_for('profile', username = username)
     
     return_dict = dict(id=tweet_id, content=content,
@@ -198,7 +202,7 @@ def profile(username):
 @auth_only
 def profile_update():
     data = request.get_json()
-    if not all(key in data for key in ['first_name','last_name','birth_date']):
+    if not all(key in data for key in ('first_name','last_name','birth_date')):
         abort(400) # missing values
         
     new_firstname = data['first_name']
