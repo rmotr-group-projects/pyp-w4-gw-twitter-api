@@ -1,6 +1,6 @@
 import sqlite3
 import json
-from flask import Flask, Response, request, abort
+from flask import Flask, Response, request, abort, url_for
 from flask import g
 
 # extra modules we added
@@ -30,10 +30,16 @@ def _get_tweet_info(tweet_id):
     return tweet
     
 def _get_user_id_from_token(request):
+    # assumes access token has already been verified but can double check
+    if 'access_token' not in request.get_json():
+        abort(401)
     access_token = request.get_json()['access_token']
     sql_command = 'SELECT user_id FROM auth WHERE access_token = ?'
     user_id_cursor = g.db.execute(sql_command, [access_token])
-    return user_id_cursor.fetchone()[0]
+    found_user = user_id_cursor.fetchone()
+    if not found_user:
+        abort(404)
+    return found_user[0]
     
 def _convert_date_iso_8601(created):
     dt_object = datetime.strptime(created, "%Y-%m-%d %H:%M:%S")
@@ -44,22 +50,23 @@ def _convert_date_iso_8601(created):
 def login():
     data = request.get_json()
     
-    try:
-        post_username = data['username']
-        post_password = data['password']
-    except KeyError:
-        abort(400) # Bad request
+    if 'username' not in data:
+        abort(400) # Bad request, no username
+    elif 'password' not in data:
+        abort(400) # Bad request, no password
+
+    post_username = data['username']
+    post_password = data['password']
     
     sql_command = 'SELECT password, id FROM user WHERE username = ?'
     
     found_user_cursor = g.db.execute(sql_command, [post_username])
     found_user = found_user_cursor.fetchone()
-    try:
-        password, id = found_user
-    except TypeError: # if username did find a match in db
-        abort(404) # Not found
+    if not found_user:
+        abort(404) # Not found, username did find a match in db
+    password, id = found_user
         
-    post_password = post_password.encode('utf-8') # needs to be in bytes
+    post_password = post_password.encode(request.charset) # note from Santiago
     post_password = md5(post_password).hexdigest()
     
     if password != post_password:
@@ -82,25 +89,25 @@ def login():
 @json_only
 @auth_only
 def logout():
-    access_token = request.get_json()['access_token']
-
-    # Delete entire row from auth table
-    sql_command = 'DELETE FROM auth WHERE access_token = ?'
-    g.db.execute(sql_command, [access_token])
+    # Delete all entries for this user (they could have logged in multiple times)
+    # good suggestion by Santiago
+    user_id = _get_user_id_from_token(request)
+    sql_command = 'DELETE FROM auth WHERE user_id = ?'
+    g.db.execute(sql_command, [user_id])
     g.db.commit()
-    return ('', 204) # No Content
+    return Response('', 204) # No Content
     
 @app.route('/tweet/<tweet_id>')
 def get_tweet(tweet_id):
     tweet_id, user_id, created, content = _get_tweet_info(tweet_id)
-    uri = '/tweet/{}'.format(tweet_id)
-    
+    uri = url_for('get_tweet', tweet_id = tweet_id) # good note from Santiago
+
     # get the username of who made that tweet
     sql_command = 'SELECT username FROM user WHERE id = ?'
     user_cursor = g.db.execute(sql_command, [user_id])
     user_tuple = user_cursor.fetchone()
     username = user_tuple[0]
-    profile = '/profile/{}'.format(username)
+    profile = url_for('profile', username = username)
     
     return_dict = dict(id=tweet_id, content=content,
                     date=_convert_date_iso_8601(created), 
@@ -125,7 +132,7 @@ def delete_tweet(tweet_id):
     sql_command = 'DELETE FROM tweet WHERE id = ?'
     g.db.execute(sql_command, [tweet_id])
     g.db.commit()
-    return ('', 204) # No Content
+    return Response('', 204) # No Content
     
 @app.route('/tweet', methods = ['POST'])
 @json_only
@@ -138,19 +145,19 @@ def create_tweet():
     g.db.execute(sql_command, [client_user_id, content])
     g.db.commit()
     
-    return ('Created', 201)
+    return Response('Created', 201)
 
 @app.errorhandler(404) # Not found
 def not_found(e):
-    return '', 404
+    return Response('', 404)
 
 @app.errorhandler(401) # Unauthorized
 def not_found(e):
-    return '', 401
+    return Response('', 401)
 
 @app.errorhandler(400) # Bad request
 def not_found(e):
-    return '', 400
+    return Response('', 400)
 
 @app.route('/profile/<username>')
 def profile(username):
@@ -159,10 +166,12 @@ def profile(username):
     sql_command1 = 'SELECT id, username, first_name, last_name, birth_date FROM user WHERE username = ?'
     user_db_data = g.db.execute(sql_command1, [username])
     user_data = user_db_data.fetchone()
-    try:
-        user_id = user_data[0]
-    except TypeError:
+    
+    if not user_data:
         abort(404)
+
+    user_id = user_data[0]
+
     dict_keys = ("user_id", "username", "first_name", "last_name", 
             "birth_date")
     profile_json_data = dict(zip(dict_keys, user_data))
@@ -189,12 +198,12 @@ def profile(username):
 @auth_only
 def profile_update():
     data = request.get_json()
-    try:
-        new_firstname = data['first_name']
-        new_lastname = data['last_name']
-        new_birthdate = data['birth_date']
-    except KeyError: # missing value
-        abort(400)
+    if not all(key in data for key in ['first_name','last_name','birth_date']):
+        abort(400) # missing values
+        
+    new_firstname = data['first_name']
+    new_lastname = data['last_name']
+    new_birthdate = data['birth_date']
         
     client_user_id = _get_user_id_from_token(request)
     sql_command = 'UPDATE user SET first_name = ?, last_name = ?, \
@@ -202,4 +211,4 @@ def profile_update():
     sql_args = [new_firstname, new_lastname, new_birthdate, client_user_id]
     g.db.execute(sql_command, sql_args)
     g.db.commit()
-    return ('', 201)
+    return Response('', 201)
