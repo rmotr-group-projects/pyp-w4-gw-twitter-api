@@ -1,4 +1,5 @@
 from functools import wraps
+from flask import abort
 
 JSON_MIME_TYPE = 'application/json'
 
@@ -6,7 +7,11 @@ JSON_MIME_TYPE = 'application/json'
 def auth_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # implement your logic here
+        userdata = request.get_json()
+        token = userdata['access_token']
+        lookup = g.db.execute('SELECT 1 FROM auth WHERE access_token = ?', (token,))
+        if not lookup.fetchone():
+            abort(401)
         return f(*args, **kwargs)
     return decorated_function
 
@@ -14,6 +19,8 @@ def auth_only(f):
 def json_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # implement your logic here
+        if request.get_json() is None:
+            abort(400)
         return f(*args, **kwargs)
     return decorated_function
+

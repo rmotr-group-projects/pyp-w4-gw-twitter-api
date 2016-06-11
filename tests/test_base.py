@@ -7,7 +7,7 @@ import tempfile
 from twitter_api import settings
 from twitter_api import app
 from twitter_api.main import connect_db
-from twitter_api.utils import md5
+from hashlib import md5
 
 
 class BaseTwitterAPITestCase(unittest.TestCase):
