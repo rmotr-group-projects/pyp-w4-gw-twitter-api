@@ -29,6 +29,7 @@ def login():    # jon working on
     try:
         username = authdata['username']
         password = authdata['password']
+        password = password.encode('utf-8')
         password = md5(password).hexdigest()
     except KeyError:
         abort(400)
