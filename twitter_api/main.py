@@ -64,25 +64,83 @@ def logout(): # Prashant is trying this now
     return Response('', status=204)
 
 
-@auth_only
-@json_only
+@app.route('/profile/<username>', methods = ['GET'])
+def read_profile(username):
+    # go look for profile in DB. 
+    profile = fetch_profile(username)
+    # no profile: 404
+    if not profile:
+        abort(404)
+    
+    uid, username, first_name, last_name, birth_date = profile
+    
+    # format of this: tests/test_profile_resource.py line 14.
+    profile_dict = {
+        'user_id': uid,
+        'username': username,
+        'first_name': first_name,
+        'last_name': last_name,
+        'birth_date': birth_date
+    }
+    #print(profile_dict)
+    tweets = fetch_user_tweets(uid)
+    profile_dict['tweet'] = tweets
+    #print(profile_dict)
+    #profile_dict = profile_dict.update(tweet_dict)
+    profile_dict['tweet_count'] = len(tweets)
+    
+    #print('DEBUG: profile dict: {}'.format(profile_dict))
+    #print('DEBUG: tweets contents: {}'.format(tweets))
+    
+    # 200 code in Response for success.
+    # return the profile, plus the tweets as a big dict, json encoding
+    return Response(json.dumps(profile_dict), status=200, content_type=JSON_MIME_TYPE)
+    
+
 @app.route('/profile', methods = ['POST'])
+@json_only
+@auth_only
 def write_profile():
-    pass
+    # snarf profile from json
+    profile = request.get_json()
+    
+    # check for all the required values 
+    # see: "test_post_profile_missing_required_fields"
+    try:
+        first_name = profile['first_name']
+        last_name = profile['last_name']
+        birth_date = profile['birth_date']
+        newdata = (first_name,last_name,birth_date)
+    except (TypeError, KeyError):
+        abort(400)
 
+    uid = token_to_uid(request)
+    g.db.execute('UPDATE user SET first_name = ?, last_name = ?, birth_date = ?', newdata)
+    g.db.commit()
+    return Response('', 201)
 
-@app.route('/profile', methods = ['GET'])
-def read_profile():
-    pass
 
 @json_only
 @app.route('/tweet', methods = ['POST'])
 def new_tweet():
     pass
 
+
 @app.route('/tweet/<id>', methods = ['GET']) # lana
-def read_tweet():
-    pass
+def read_tweet(tweet_id):
+    tweet_data = g.db.execute('SELECT id, user_id, created, content FROM tweet where id=?', [tweet_id]).fetchone()
+    tweet_id, uid, created, content = tweet_data
+    username = g.db.execute('SELECT username from user WHERE id=?', [uid]).fetchone()
+    
+    response_dict = {
+        "id": tweet_id,
+        "content": content,
+        "date": created,
+        "profile": '/profile/{}'.format(username),
+        "uri": '/tweet/{}'.format(tweet_id)
+    }
+    
+    return Response(json.dumps(response_dict), status=200, content_type=JSON_MIME_TYPE)
 
 @json_only
 @auth_only
@@ -95,6 +153,7 @@ def delete_tweet():
 def token_to_username(token): # jon
     # returns a username given a token
     pass
+
 
 def token_to_uid(request): # jon
     # returns a username given a token
@@ -110,6 +169,39 @@ def token_to_uid(request): # jon
     else:
         abort(404)
 
+
+def fetch_profile(username): # jon
+    # fetch the user's profile from the DB.
+    profile_data = g.db.execute(
+        'SELECT id, username, first_name, last_name, birth_date FROM user WHERE username = ?', 
+        (username,)
+    )
+    return profile_data.fetchone()
+
+def fetch_user_tweets(user_id): # jon
+    # fetch all of the users's tweets, returns as a list of dicts.
+    alltweets = g.db.execute('SELECT id, created, content FROM tweet WHERE user_id = ?', (user_id,))
+    # need to push this into a dict now.
+    results = []
+    for tweet in alltweets:
+        #print('DEBUG: formatting this tweet: {}'.format(tweet))
+        tweet_id, created, content = tweet
+        # this is the format from the profile test.
+        #    'date': '2016-06-01T05:13:00',
+        #    'id': 1,
+        #    'text': 'Tweet 1 testuser1',
+        #    'uri': '/tweet/1'
+        formatted_tweet = {
+            'id': tweet_id,
+            'date': created, # i hope i don't have to mess with date!
+            'text': content,
+            'uri': '/tweet/{}'.format(tweet_id)
+        }
+        results.append(formatted_tweet)
+        #print('DEBUG: results is now: {}'.format(results))
+    #print('DEBUG: returning this list of dicts (tweets) {}'.format(results))
+    return results # a list of dicts, each dict a discreet tweet
+        
 def generate_token():  # jon
     return 'foo'
     # TODO: REAL CODE HERE PLEASE!

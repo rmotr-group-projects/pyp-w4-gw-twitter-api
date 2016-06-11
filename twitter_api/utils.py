@@ -1,10 +1,10 @@
 from functools import wraps
-from flask import abort
+from flask import abort, request, g
 
 JSON_MIME_TYPE = 'application/json'
 
 
-def auth_only(f):
+def auth_only(f):  # jon
     @wraps(f)
     def decorated_function(*args, **kwargs):
         userdata = request.get_json()
@@ -16,7 +16,7 @@ def auth_only(f):
     return decorated_function
 
 
-def json_only(f):
+def json_only(f): # jon
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if request.get_json() is None:
