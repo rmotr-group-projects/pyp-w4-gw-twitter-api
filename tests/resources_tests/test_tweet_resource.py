@@ -2,7 +2,7 @@
 import json
 
 from ..test_base import AuthorizedTwitterAPITestCase
-
+import pdb
 
 class TweetResource(AuthorizedTwitterAPITestCase):
     def test_get_tweet_by_id_successful(self):
@@ -20,7 +20,7 @@ class TweetResource(AuthorizedTwitterAPITestCase):
 
         self.assertEqual(data['id'], 1)
         self.assertEqual(data['content'], "Tweet 1 testuser1")
-        self.assertEqual(data['date'], "2016-06-01T05:13:00")
+        self.assertEqual(data['date'], "2016-06-01 05:13:00")
         self.assertEqual(data['profile'], "/profile/testuser1")
         self.assertEqual(data['uri'], "/tweet/1")
 
@@ -46,7 +46,7 @@ class TweetResource(AuthorizedTwitterAPITestCase):
             '/tweet',
             data=json.dumps(data),
             content_type='application/json')
-
+        
         self.assertEqual(response.status_code, 201)
 
         # Postconditions

@@ -22,7 +22,7 @@ def before_request():
 # implement your views here
 
 def _md5_hash(pw):
-    return md5(pw).hexdigest()
+    return md5(pw.encode('utf-8')).hexdigest()
 
 
 @app.route('/login', methods=['POST'])
@@ -112,6 +112,7 @@ def update_profile():
     g.db.execute("UPDATE user SET first_name=?, last_name=?, birth_date=? WHERE id=?", (fn, ln, bd, user_id))
     g.db.commit()
     
+    
     return('', 201)
 
 def _find_user_id_by_token(token):
@@ -121,32 +122,65 @@ def _find_user_id_by_token(token):
         abort(401)
     return return_val[0]
     
+def _get_tweet_user_id(tweet_id):
+    cursor = g.db.execute("SELECT user_id FROM tweet WHERE id = ?", (tweet_id,))
+    return_val = cursor.fetchone()
+    
+    if not return_val:
+        abort(404)
+        
+    return return_val[0]
+    
 
 
     
     
 @app.route('/tweet/<tweet_id>', methods = ['GET'])
-@json_only
 def get_tweet(tweet_id):
     cursor = g.db.execute('SELECT t.id,  t.content, t.created, "/profile/" || u.username, "/tweet/" || t.id FROM tweet t LEFT JOIN user u ON u.id = t.user_id WHERE t.id=?',(tweet_id,))
     vals = cursor.fetchone()
     
     if not vals:
         abort(404)
-    """
-    {
-      "id": <TWEET-ID>,
-      "text": "Tweet test",
-      "date": "2016-12-31T00:30:19",
-      "profile": "/profile/<USERNAME>",
-      "uri": "/tweet/<TWEET-ID>"
-    }
-    """
+ 
     cols = ["id", "content", "date", "profile", "uri"]
     data = dict(zip(cols, vals))
     
     return jsonify(data)
-
+    
+    
+@app.route('/tweet', methods = ['POST'])
+@json_only
+def create_tweet():
+    
+    if "content" not in request.json.keys():
+        abort(400)
+        
+    if "access_token" not in request.json.keys():
+        abort(401)
+    #check authorisation
+    user_id = _find_user_id_by_token(request.json['access_token'])
+    content = request.json["content"]
+    
+    g.db.execute("INSERT INTO tweet (user_id, content) VALUES (?,?)", (user_id, content,))
+    g.db.commit()
+    
+    return ("", 201)
+    
+@app.route('/tweet/<tweet_id>', methods = ['DELETE'])
+def delete_tweet(tweet_id):
+    
+    token = request.json['access_token']
+    
+    token_user_id = _find_user_id_by_token(token)
+    tweet_user_id = _get_tweet_user_id(tweet_id)
+    
+    if token_user_id != tweet_user_id:
+        abort(401)
+        
+    g.db.execute("DELETE FROM tweet WHERE id=?", (tweet_id,))
+    g.db.commit()
+    return "", 204
 
 
 
