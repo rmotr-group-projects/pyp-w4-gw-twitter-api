@@ -4,6 +4,8 @@ from flask import Flask, g, request, url_for, Response, abort
 import json
 from .utils import *
 from hashlib import md5
+import string
+import random
 
 app = Flask(__name__)
 
@@ -227,8 +229,11 @@ def fetch_user_tweets(user_id): # jon
     return results # a list of dicts, each dict a discreet tweet
         
 def generate_token():  # jon
-    return 'foo'
-    # TODO: REAL CODE HERE PLEASE!
+    # IDEA CREDIT: http://davidsj.co.uk/blog/python-generate-random-password-strings/
+    #chars = string.ascii_letters + string.digits
+    chars = string.ascii_letters + string.digits + string.punctuation
+    pwdSize = 20
+    return  ''.join((random.choice(chars)) for x in range(pwdSize))
 
 # pre-written handlers.  wrapped in Response.
 @app.errorhandler(404)
