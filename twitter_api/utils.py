@@ -8,7 +8,10 @@ def auth_only(f):  # jon
     @wraps(f)
     def decorated_function(*args, **kwargs):
         userdata = request.get_json()
-        token = userdata['access_token']
+        try:
+            token = userdata['access_token']
+        except KeyError:
+            abort(401)
         lookup = g.db.execute('SELECT 1 FROM auth WHERE access_token = ?', (token,))
         if not lookup.fetchone():
             abort(401)

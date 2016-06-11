@@ -121,16 +121,23 @@ def write_profile():
 
 
 @json_only
+@auth_only
 @app.route('/tweet', methods = ['POST'])
 def new_tweet():
-    pass
+    
+    uid = token_to_uid(request)
+    g.db.execute('INSERT INTO tweet (user_id, content) VALUES (?, ?)', (uid, request.get_json()['content']))
+    g.db.commit()
+    return Response('', 201)
 
-
-@app.route('/tweet/<id>', methods = ['GET']) # lana
+@app.route('/tweet/<tweet_id>', methods = ['GET']) # lana
 def read_tweet(tweet_id):
     tweet_data = g.db.execute('SELECT id, user_id, created, content FROM tweet where id=?', [tweet_id]).fetchone()
+    if not tweet_data: # test_get_tweet_by_id_doesnt_exist
+        abort(404)
+        
     tweet_id, uid, created, content = tweet_data
-    username = g.db.execute('SELECT username from user WHERE id=?', [uid]).fetchone()
+    username = g.db.execute('SELECT username from user WHERE id=?', [uid]).fetchone()[0]
     
     response_dict = {
         "id": tweet_id,
@@ -144,17 +151,33 @@ def read_tweet(tweet_id):
 
 @json_only
 @auth_only
-@app.route('/tweet/<id>', methods = ['DELETE'])
-def delete_tweet():
-    pass
+@app.route('/tweet/<tweet_id>', methods = ['DELETE'])
+def delete_tweet(tweet_id):
+    # given tweet id, look up the tweet in the tweets table and delete it
+    # only allow user to delete own tweets.
+    
+    # uid from the request
+    uid = token_to_uid(request) 
+    # uid from db for this tweet id.
+    tweet_data = g.db.execute('SELECT * FROM tweet WHERE id = ?', (tweet_id,))
+    #if not tweet_data:
+    #    abort(404)
+        
+    try:
+        tweet_uid = tweet_data.fetchone()[0]
+    except (KeyError, TypeError):
+        abort(404)
+        
+    if uid is not tweet_uid:
+        abort(401)
+        
+    g.db.execute('DELETE from tweet WHERE id = ?', (tweet_id,))
+    g.db.commit()
+    return Response('', 204)
 
 
-# helper functions
-def token_to_username(token): # jon
-    # returns a username given a token
-    pass
-
-
+# helper functions below here
+@json_only
 def token_to_uid(request): # jon
     # returns a username given a token
     if 'access_token' not in request.get_json():
@@ -167,7 +190,7 @@ def token_to_uid(request): # jon
     if uid:
         return uid[0]
     else:
-        abort(404)
+        abort(401)
 
 
 def fetch_profile(username): # jon
