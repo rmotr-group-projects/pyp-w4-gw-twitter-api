@@ -85,16 +85,9 @@ def read_profile(username):
         'last_name': last_name,
         'birth_date': birth_date
     }
-    #print(profile_dict)
     tweets = fetch_user_tweets(uid)
     profile_dict['tweet'] = tweets
-    #print(profile_dict)
-    #profile_dict = profile_dict.update(tweet_dict)
     profile_dict['tweet_count'] = len(tweets)
-    
-    #print('DEBUG: profile dict: {}'.format(profile_dict))
-    #print('DEBUG: tweets contents: {}'.format(tweets))
-    
     # 200 code in Response for success.
     # return the profile, plus the tweets as a big dict, json encoding
     return Response(json.dumps(profile_dict), status=200, content_type=JSON_MIME_TYPE)
@@ -163,9 +156,7 @@ def delete_tweet(tweet_id):
     uid = token_to_uid(request) 
     # uid from db for this tweet id.
     tweet_data = g.db.execute('SELECT * FROM tweet WHERE id = ?', (tweet_id,))
-    #if not tweet_data:
-    #    abort(404)
-        
+
     try:
         tweet_uid = tweet_data.fetchone()[0]
     except (KeyError, TypeError):
@@ -210,7 +201,6 @@ def fetch_user_tweets(user_id): # jon
     # need to push this into a dict now.
     results = []
     for tweet in alltweets:
-        #print('DEBUG: formatting this tweet: {}'.format(tweet))
         tweet_id, created, content = tweet
         # this is the format from the profile test.
         #    'date': '2016-06-01T05:13:00',
@@ -224,8 +214,6 @@ def fetch_user_tweets(user_id): # jon
             'uri': '/tweet/{}'.format(tweet_id)
         }
         results.append(formatted_tweet)
-        #print('DEBUG: results is now: {}'.format(results))
-    #print('DEBUG: returning this list of dicts (tweets) {}'.format(results))
     return results # a list of dicts, each dict a discreet tweet
         
 def generate_token():  # jon
