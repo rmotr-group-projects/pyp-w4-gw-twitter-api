@@ -6,7 +6,10 @@ import datetime
 from flask import Flask, abort, g, request, Response
 import json
 
-from utils import *
+try:
+    from utils import *
+except:
+    from .utils import *
 
 app = Flask(__name__)
 
