@@ -20,3 +20,17 @@ def json_only(f):
             abort(400)
         return f(*args, **kwargs)
     return decorated_function
+    
+def has_json_keys(*keys, **kwargs):
+    # same as has_json_keys(*keys, error = 401) but works with python 2
+    error = kwargs.pop('error', 401)
+    def outer(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            for json_key in keys:
+                if json_key not in request.json:
+                    abort(error)
+            return f(*args, **kwargs)
+        return decorated_function
+    return outer
+        

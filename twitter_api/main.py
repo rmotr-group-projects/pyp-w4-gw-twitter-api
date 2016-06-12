@@ -1,5 +1,5 @@
 import sqlite3
-from .utils import json_only
+from .utils import json_only, has_json_keys
 from flask import Flask, jsonify
 from flask import g, request, abort
 from hashlib import md5
@@ -26,12 +26,10 @@ def _md5_hash(pw):
 
 
 @app.route('/login', methods=['POST'])
+@has_json_keys('password', 'username', error = 400)
 def login():
     #Accept json with username and pw
     #return acces token
-    if  'password' not in request.json or 'username' not in request.json:
-        abort(400)
-    
     user = request.json['username']
     received_password = request.json['password']
     
@@ -49,7 +47,8 @@ def login():
         now = str(datetime.now())
         access_token = _md5_hash(user+received_password+now)
         #insert to auth table
-        g.db.execute('INSERT INTO "auth" ("user_id", "access_token", "created") VALUES (?, ?, ?)', (user_id, access_token, now))
+        g.db.execute("""INSERT INTO "auth" ("user_id", "access_token", "created")
+                        VALUES (?, ?, ?)""", (user_id, access_token, now))
         g.db.commit()
         #return access token
         dict_for_json = {"access_token" : access_token}
@@ -60,10 +59,8 @@ def login():
         
     
 @app.route('/logout', methods=['POST'])
+@has_json_keys('access_token')
 def logout():
-    if 'access_token' not in request.json:
-        abort(401)
-        
     token = request.json['access_token']
     g.db.execute('DELETE FROM "auth" WHERE access_token = ?', (token,))
     g.db.commit()
@@ -137,7 +134,10 @@ def _get_tweet_user_id(tweet_id):
     
 @app.route('/tweet/<tweet_id>', methods = ['GET'])
 def get_tweet(tweet_id):
-    cursor = g.db.execute('SELECT t.id,  t.content, t.created, "/profile/" || u.username, "/tweet/" || t.id FROM tweet t LEFT JOIN user u ON u.id = t.user_id WHERE t.id=?',(tweet_id,))
+    cursor = g.db.execute("""SELECT t.id,  t.content, t.created, "/profile/" 
+                                || u.username, "/tweet/" || t.id 
+                                FROM tweet t LEFT JOIN user u ON u.id = t.user_id 
+                                WHERE t.id=?""", (tweet_id,))
     vals = cursor.fetchone()
     
     if not vals:
@@ -151,13 +151,9 @@ def get_tweet(tweet_id):
     
 @app.route('/tweet', methods = ['POST'])
 @json_only
+@has_json_keys('content', error = 400)
+@has_json_keys('access_token', error = 401)
 def create_tweet():
-    
-    if "content" not in request.json.keys():
-        abort(400)
-        
-    if "access_token" not in request.json.keys():
-        abort(401)
     #check authorisation
     user_id = _find_user_id_by_token(request.json['access_token'])
     content = request.json["content"]
