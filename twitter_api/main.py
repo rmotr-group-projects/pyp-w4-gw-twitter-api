@@ -44,7 +44,7 @@ def login():
     if not retrieved_data or not retrieved_user_id: 
         return abort(404)
         
-    if retrieved_password == md5(password).hexdigest():
+    if retrieved_password == md5(password.encode('utf-8')).hexdigest():
         token = create_token()
         datestamp = datetime.datetime.now().strftime("%Y-%m-%d")
         g.db.execute(
