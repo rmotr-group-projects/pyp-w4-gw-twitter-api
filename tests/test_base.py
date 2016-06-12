@@ -53,8 +53,8 @@ class AuthorizedTwitterAPITestCase(BaseTwitterAPITestCase):
     def setUp(self):
         super(AuthorizedTwitterAPITestCase, self).setUp()
 
-        self.user1_token = 'AB$11'
-        self.user2_token = 'AB$22'
+        self.user1_token = 'cookies'
+        self.user2_token = 'icecream'
 
         self.db.execute('INSERT INTO "auth" ("user_id", "access_token") VALUES (1, "%s");' % self.user1_token)
         self.db.execute('INSERT INTO "auth" ("user_id", "access_token") VALUES (2, "%s");' % self.user2_token)

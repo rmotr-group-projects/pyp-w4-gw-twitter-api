@@ -20,7 +20,7 @@ class TweetResource(AuthorizedTwitterAPITestCase):
 
         self.assertEqual(data['id'], 1)
         self.assertEqual(data['content'], "Tweet 1 testuser1")
-        self.assertEqual(data['date'], "2016-06-01T05:13:00")
+        self.assertEqual(data['date'], "2016-06-01 05:13:00")
         self.assertEqual(data['profile'], "/profile/testuser1")
         self.assertEqual(data['uri'], "/tweet/1")
 

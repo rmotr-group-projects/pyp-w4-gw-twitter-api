@@ -10,8 +10,10 @@ from utils import *
 
 app = Flask(__name__)
 
+
 def connect_db(db_name):
     return sqlite3.connect(db_name)
+
 
 @app.before_request
 def before_request():
@@ -34,11 +36,9 @@ def login():
         
     query = "SELECT id, password from user WHERE username=?"
     cursor = g.db.execute(query, (username, ))
-    retrieved_data = cursor.fetchone()
-    if retrieved_data:
-        retrieved_user_id, retrieved_password  = retrieved_data
+    retrieved_user_id, retrieved_password = cursor.fetchone()
     
-    if not retrieved_data or not retrieved_user_id: 
+    if not retrieved_user_id: 
         return abort(404)
         
     if retrieved_password == md5(password).hexdigest():
@@ -49,11 +49,7 @@ def login():
             (retrieved_user_id, token, datestamp)
         )
         g.db.commit()
-        
-        return Response(
-            json.dumps({"access_token":token}),
-            201
-        )
+        return token
         
     else:
         abort(401)
@@ -78,7 +74,6 @@ def get_profile(username):
         "username": retrieved_user[1],
         "first_name": retrieved_user[2],
         "last_name": retrieved_user[3],
-        "birth_date": retrieved_user[4],
         "tweet": [],
         "tweet_count": 0
     }
@@ -95,8 +90,8 @@ def get_profile(username):
 
 
 @app.route('/profile', methods = ['POST'])
-@auth_only
-#@json.only
+#@auth_only()
+#@json.only()
 def update_profile():
     request.data = json.loads(request.data)
     if not "first_name" in request.data or not request.data["first_name"]: abort(400)
@@ -127,20 +122,11 @@ def update_profile():
                 
 
 @app.route('/tweet', methods = ['POST'])
-@json_only
-@auth_only
+# @auth.only
+#CREATE TWEET
 def post_tweet():
-    payload = json.loads(request.data)
-    get_query = "SELECT user_id FROM auth WHERE access_token = ?"
-    get_cursor = g.db.execute(get_query, (payload['access_token'], ))
-    user = get_cursor.fetchone()[0]
-    
-    datestamp = datetime.datetime.now().strftime("%Y-%m-%d")
-    update_query = "INSERT INTO tweet (user_id, created, content) VALUES(?,?,?)"
-    update_cursor = g.db.execute(update_query, (user, datestamp, payload['content']))
-    g.db.commit()
-    
-    return Response("", 201)
+    # post success 201
+    pass
 
 #DELETE or VIEW tweets
 @app.route('/tweet/<tweet_id>', methods = ["DELETE", "GET"])
@@ -167,10 +153,10 @@ def get_tweet(result):
         json.dumps({
             "date": result[2],
             "id": result[0],
-            "content": result[3],
+            "text": result[3],
             "profile": "/profile/{}".format(user[0]),
             "uri": "/tweet/{}".format(result[0])
-        }),
+        content_type
         content_type = 'application/json'
     )
 
@@ -178,36 +164,22 @@ def get_tweet(result):
 #DELETE TWEET
 @auth_only
 def delete_tweet(tweet_id):
-    token_owner_query = "SELECT user_id FROM auth WHERE access_token = ?"
-    token_owner = g.db.execute(token_owner_query, (json.loads(request.data)["access_token"] , ))
-    token_owner = token_owner.fetchone()
-    
-    tweet_owner_query = "SELECT user_id from tweet WHERE id= ?"
-    tweet_owner = g.db.execute(tweet_owner_query, (tweet_id, ))
-    tweet_owner = tweet_owner.fetchone()
-    
-    if not tweet_owner == token_owner: return abort(401)
-    
-    query = "DELETE FROM tweet WHERE id = ?"
-    g.db.execute(query, (tweet_id, ))
-    g.db.commit()
-    return Response("Deleted!", 204)
-    
+    query = "SELECT * FROM tweet WHERE id = ?"
+    cursor = g.db.execute(query, (tweet_id, ))
+    # make sure tweet trying to delete belongs to the same auth user (this may already be done by @dec)
+    # check if the tweet exists, if not, 404
+    # success 204
+    pass
+
 
 @app.route('/logout', methods =['POST'])
-def logout():
-    if "access_token" not in json.loads(request.data): return abort(401)
-    query = "SELECT access_token FROM auth WHERE access_token =?"
-    cursor = g.db.execute(query, (json.loads(request.data)["access_token"], ))
-    
-    if not cursor.fetchone():
-        abort(401)
-    
-    del_query = "DELETE FROM auth WHERE access_token = ?"
-    g.db.execute(del_query, (json.loads(request.data)["access_token"], ))
-    g.db.commit()
-    return Response("Deleted!", 204)
-    
+def logout(access_token):
+    #check if user is logged in (token)
+    #cursor = self.db.execute("select * from auth where user_id = ?")
+    #if no fetch result, return 401
+    #else return 201 and delete from auth
+    pass
+
 
 @app.errorhandler(404)
 def not_found(e):
