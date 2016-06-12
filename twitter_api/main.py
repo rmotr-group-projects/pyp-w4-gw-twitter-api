@@ -28,7 +28,7 @@ def create_token():
 
 @app.route('/login', methods = ['POST'])
 def login():
-    request.data = json.loads(request.data)
+    request.data = json.loads(request.data.decode('utf-8'))
     password = request.data["password"] if "password" in request.data else None
     username = request.data["username"] if "username" in request.data else None
     
@@ -101,7 +101,7 @@ def get_profile(username):
 @auth_only
 #@json.only
 def update_profile():
-    request.data = json.loads(request.data)
+    request.data = json.loads(request.data.decode('utf-8'))
     if not "first_name" in request.data or not request.data["first_name"]: abort(400)
     
     if "access_token" in request.data and request.data['access_token']:
@@ -111,13 +111,13 @@ def update_profile():
         
         query = "UPDATE user SET "
         
-        for key, value in request.data.items()[:-1]:
+        for key, value in list(request.data.items())[:-1]:
             if key != "access_token":
                 query += "{} = '{}', ".format(key, value)
             
         query += "{} = '{}' WHERE id = '{}'".format(
-            request.data.items()[-1][0],
-            request.data.items()[-1][1],
+            list(request.data.items())[-1][0],
+            list(request.data.items())[-1][1],
             user_id
         )
         
@@ -133,7 +133,7 @@ def update_profile():
 @json_only
 @auth_only
 def post_tweet():
-    payload = json.loads(request.data)
+    payload = json.loads(request.data.decode('utf-8'))
     get_query = "SELECT user_id FROM auth WHERE access_token = ?"
     get_cursor = g.db.execute(get_query, (payload['access_token'], ))
     user = get_cursor.fetchone()[0]
@@ -182,7 +182,7 @@ def get_tweet(result):
 @auth_only
 def delete_tweet(tweet_id):
     token_owner_query = "SELECT user_id FROM auth WHERE access_token = ?"
-    token_owner = g.db.execute(token_owner_query, (json.loads(request.data)["access_token"] , ))
+    token_owner = g.db.execute(token_owner_query, (json.loads(request.data.decode('utf-8'))["access_token"] , ))
     token_owner = token_owner.fetchone()
     
     tweet_owner_query = "SELECT user_id from tweet WHERE id= ?"
@@ -199,15 +199,15 @@ def delete_tweet(tweet_id):
 
 @app.route('/logout', methods =['POST'])
 def logout():
-    if "access_token" not in json.loads(request.data): return abort(401)
+    if "access_token" not in json.loads(request.data.decode('utf-8')): return abort(401)
     query = "SELECT access_token FROM auth WHERE access_token =?"
-    cursor = g.db.execute(query, (json.loads(request.data)["access_token"], ))
+    cursor = g.db.execute(query, (json.loads(request.data.decode('utf-8'))["access_token"], ))
     
     if not cursor.fetchone():
         abort(401)
     
     del_query = "DELETE FROM auth WHERE access_token = ?"
-    g.db.execute(del_query, (json.loads(request.data)["access_token"], ))
+    g.db.execute(del_query, (json.loads(request.data.decode('utf-8'))["access_token"], ))
     g.db.commit()
     return Response("Deleted!", 204)
     

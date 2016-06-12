@@ -9,7 +9,7 @@ JSON_MIME_TYPE = 'application/json'
 def auth_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        data = json.loads(request.data)
+        data = json.loads(request.data.decode('utf-8'))
         try: #Try to get the access token
             token = data["access_token"]
         except: #If it wasnt passed, throw a 401
@@ -29,7 +29,7 @@ def json_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         try:
-            data = json.loads(request.data)
+            data = json.loads(request.data.decode('utf-8'))
         except:
             return abort(400)
         else:
