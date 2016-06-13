@@ -1,6 +1,6 @@
 import sqlite3
 import random
-from flask import Flask, Response, request, abort, g
+from flask import Flask, Response, request, abort, g, jsonify
 from .utils import JSON_MIME_TYPE, auth_only, json_only
 from hashlib import md5
 import json
@@ -81,13 +81,12 @@ def logout():
     
     return Response("", 204)
     
-@app.route('/profile/<username>') #get public profile
-@json_only
-def profile(username):
+@app.route('/profile/<username>', methods = ['GET']) #get public profile
+def get_profile(username):
 
     # pull user db info passed on passed username 
     sql_query_username = 'SELECT id, username, first_name, last_name, birth_date FROM user WHERE username = ?'
-    user_db_data = g.db.execute(sql_query_username, [username])
+    user_db_data = g.db.execute(sql_query_username, (username,))
     user_data = user_db_data.fetchone()
     
     if not user_data: #if no user data
@@ -98,15 +97,16 @@ def profile(username):
            "birth_date"), user_data))
            
     #query user tweets and then build tweet list
-    sql_query_tweets = 'SELECT id, created, content, id FROM tweet WHERE user_id = ?'
-    user_tweets = g.db.execute(sql_query_tweets,profile_data['user_id'])
+    sql_query_tweets = 'SELECT id, content, created FROM tweet WHERE user_id = ? ORDER BY id asc'
+    user_tweets = g.db.execute(sql_query_tweets, (profile_data['user_id'],))
 
-    tweet_list = []
-    for tweet in user_tweets:
-        row_dict = dict(zip("id", "date", "text", "uri", tweet))
-        row_dict['uri'] = '/tweet/{}'.format(row_dict['uri'])
-        #row_dict['date'] = formatdate(row_dict['date']) #still to do
-        tweet_list.append(row_dict)
+    # tweet_list = []
+    # for tweet in user_tweets:
+    #     row_dict = dict(zip("id", "text", "date", "uri", tweet))
+    #     row_dict['uri'] = '/tweet/{}'.format(row_dict['uri'])
+    #     #row_dict['date'] = formatdate(row_dict['date']) #still to do
+    #     tweet_list.append(row_dict)
+    tweet_list = [dict(id=row[0], text=row[1], date=row[2], uri="/tweet/" + str(row[0])) for row in user_tweets.fetchall()]
  
     profile_data['tweet'] = tweet_list
     profile_data['tweet_count'] = len(tweet_list)
@@ -122,25 +122,47 @@ def profile(username):
 def update_profile():
     #get userid from auth based on access_token
     #if valid, post updated 
-    pass
-
+    new_info = set(['first_name', 'last_name', 'birth_date'])
+    
+    if new_info.intersection(request.json.keys()) != new_info:
+        abort(400)
+        
+    if "access_token" not in request.json.keys():
+        abort(401)
+   
+    try: 
+        fn = request.json['first_name']
+        ln = request.json['last_name']
+        bd = request.json['birth_date']
+        token = request.json['access_token']
+    except:
+        abort(400)
+    
+    cursor = g.db.execute("SELECT user_id FROM auth WHERE access_token=?", (token,))
+    return_val = cursor.fetchone()
+    user_id = return_val[0]
+    
+    g.db.execute("UPDATE user SET first_name=?, last_name=?, birth_date=? WHERE id=?", (fn, ln, bd, user_id))
+    g.db.commit()
+    return Response("", 201)
 
 @app.route('/tweet/<tweet_id>')  #get
 @json_only
+@auth_only
 def get_tweet(tweet_id):
            # get all the tweet info as well as username from user table
-    sql_tweet_query = 'SELECT * FROM tweet WHERE id = ?'
+    sql_tweet_query = 'SELECT id, user_id, created, content FROM tweet WHERE id = ?'
 
-    result_cursor = g.db.execute(sql_tweet_query, [tweet_id])
+    result_cursor = g.db.execute(sql_tweet_query, (tweet_id,))
     if not result_cursor.fetchone():
        abort(404)    
     #start to build the Response
     result_dict = zip(['id', 'user_id', 'date', 'text'], result_cursor.fetchone())
 
     sql_user_query = 'SELECT username FROM user WHERE id = ?'
-    result_username = g.db.execute(sql_tweet_query, [result_dict['user_id']])
-    result_dict['profile'] = '/profile/<{}>'.format(result_username[0])
-    result_dict['uri'] = '/tweet/<{}>'.format(tweet_id)
+    result_username = g.db.execute(sql_tweet_query, (result_dict['user_id'],))
+    result_dict['profile'] = '/profile/{}'.format(result_username[0])
+    result_dict['uri'] = '/tweet/{}'.format(tweet_id)
 
     response = Response(json.dumps(result_dict), status=200, content_type=JSON_MIME_TYPE)
     
@@ -150,14 +172,40 @@ def get_tweet(tweet_id):
 @app.route('/tweet', methods = ['POST']) #post new tweet  #require auth
 @json_only
 @auth_only
-def post_tweet():
-    pass
+def create_tweet():
+    #check authorisation
+    cursor = g.db.execute("SELECT user_id FROM auth WHERE access_token=?", (request.json['access_token'],))
+    user_id = cursor.fetchone()
+    content = request.json["content"]
+    
+    g.db.execute("INSERT INTO tweet (user_id, content) VALUES (?,?)", (user_id, content,))
+    g.db.commit()
+    
+    return ("", 201)
 
 @app.route('/tweet/<tweet_id>', methods = ['DELETE']) #delete tweet #require auth
 @json_only
 @auth_only
 def delete_tweet(tweet_id):
-    pass
+    tweet_data = g.db.execute('SELECT * FROM tweet WHERE id = ?', (tweet_id,))
+    if 'access_token' not in request.get_json():
+        abort(401)
+    else:    
+        token = request.get_json()['access_token']
+
+    uid_results = g.db.execute('SELECT user_id FROM auth WHERE access_token = ?', (token,))
+    uid = uid_results.fetchone()[0]
+    try:
+        tweet_uid = tweet_data.fetchone()[0]
+    except (KeyError, TypeError):
+        abort(404)
+        
+    if uid is not tweet_uid:
+        abort(401)
+        
+    g.db.execute('DELETE from tweet WHERE id = ?', (tweet_id,))
+    g.db.commit()
+    return Response('', 204)
 
 
 @app.errorhandler(404)
