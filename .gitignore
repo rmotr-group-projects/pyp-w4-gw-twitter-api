@@ -63,3 +63,5 @@ target/
 
 *.db
 .DS_Store
+
+api_env/
