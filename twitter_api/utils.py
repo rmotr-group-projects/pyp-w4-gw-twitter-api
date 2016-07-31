@@ -6,7 +6,7 @@ JSON_MIME_TYPE = 'application/json'
 
 
 def hash_to_md5(string):
-    return md5(string).hexdigest()
+    return md5(str(string)).hexdigest()
     
 
 def auth_only(f):
