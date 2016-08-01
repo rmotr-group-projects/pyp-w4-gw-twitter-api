@@ -22,7 +22,7 @@ def before_request():
 @app.route('/login', methods=['POST'])
 def login():
     # Get user credentials from request
-    user_data = json.loads(request.data)
+    user_data = json.loads(request.data.decode('utf-8'))
     
     # Validate required params
     try:
@@ -67,7 +67,7 @@ def login():
 def logout():
     # Get access_token from request.data
     try:
-        access_token = json.loads(request.data)['access_token']
+        access_token = json.loads(request.data.decode('utf-8'))['access_token']
     except KeyError:
         return Response(status=401)
     
@@ -141,14 +141,14 @@ def get_profile(username):
 def post_profile():
     # Get access_token from request.data
     try:
-        access_token = json.loads(request.data)['access_token']
+        access_token = json.loads(request.data.decode('utf-8'))['access_token']
     except KeyError:
         return Response(status=401)
         
     try:
-        first_name = json.loads(request.data)['first_name']
-        last_name = json.loads(request.data)['last_name']
-        birth_date = json.loads(request.data)['birth_date']
+        first_name = json.loads(request.data.decode('utf-8'))['first_name']
+        last_name = json.loads(request.data.decode('utf-8'))['last_name']
+        birth_date = json.loads(request.data.decode('utf-8'))['birth_date']
     except KeyError:
         return Response(status=400)
         
@@ -218,12 +218,12 @@ def post_tweet():
 
     # Check that access_token and content from the tweet were given
     try:
-        access_token = json.loads(request.data)['access_token']
+        access_token = json.loads(request.data.decode('utf-8'))['access_token']
     except KeyError:
         return Response(status=401)
         
     try:
-        content = json.loads(request.data)['content']
+        content = json.loads(request.data.decode('utf-8'))['content']
     except KeyError:
         return Response(status=400)
         
@@ -254,7 +254,7 @@ def post_tweet():
 def delete_tweet(tweet_id):
     # Check that access_token and content from the tweet were given
     try:
-        access_token = json.loads(request.data)['access_token']
+        access_token = json.loads(request.data.decode('utf-8'))['access_token']
     except KeyError:
         return Response(status=401)  
         
