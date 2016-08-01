@@ -6,8 +6,7 @@ JSON_MIME_TYPE = 'application/json'
 
 
 def hash_to_md5(string):
-    import ipdb; ipdb.set_trace()
-    return md5(str(string).encode('utf-8')).hexdigest()
+    return md5(string.encode('utf-8')).hexdigest()
     
 
 def auth_only(f):
