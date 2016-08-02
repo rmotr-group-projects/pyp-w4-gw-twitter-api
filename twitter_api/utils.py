@@ -8,7 +8,7 @@ def auth_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         import ipdb;  ipdb.set_trace()
-        print "autho only?"
+        #print "autho only?"
         # implement your logic here
         return f(*args, **kwargs)
     return decorated_function

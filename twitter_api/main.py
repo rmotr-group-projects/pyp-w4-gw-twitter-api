@@ -2,7 +2,7 @@ import sqlite3
 
 from flask import Flask
 from flask import g
-from utils import *
+from .utils import *
 from flask import request
 from flask import Response
 
@@ -44,7 +44,10 @@ def unauth_request(e):
 def login():
     if request.method == 'POST':
         # import ipdb;  ipdb.set_trace()
-        data = json.loads(request.data)
+        
+ 
+        data = json.loads(str(request.data.decode('utf-8')))
+      
         # print md5( data['password']) 
         if 'password' not in data:
             return 'Why u no password?',400
@@ -54,7 +57,7 @@ def login():
         if not curresult:
             return "no such user",404 # shouldn't do this because of security issue but whatevs
 
-        password =  md5(data['password']).hexdigest()# {u'username': u'demo', u'password': u'demo'} 
+        password =  md5(data['password'].encode('utf-8')).hexdigest()# {u'username': u'demo', u'password': u'demo'} 
         cur = g.db.cursor()
         query = 'select id from user where username="{}" and password="{}";'.format(data['username'],password )
         # print command
@@ -74,7 +77,7 @@ def login():
 
 @app.route('/logout', methods=['POST']) 
 def logout():
-    data = json.loads(request.data)
+    data = json.loads(str(request.data.decode('utf-8')))
         # print md5( data['password']) 
     if 'access_token' not in data:
         return 'Why u no access_token?',401
@@ -109,7 +112,7 @@ def access_token_user(access_token): # returns userid of token holder or None if
 @app.route('/tweet/<int:tweet_id>', methods=['GET','DELETE']) 
 def tweet(tweet_id=None):    
     if request.method == 'DELETE':
-        data = json.loads(request.data)
+        data = json.loads(str(request.data.decode('utf-8')))
         if 'access_token' not in data:
             return "No access_token!",401
         user = access_token_user(data['access_token'])
@@ -160,7 +163,7 @@ def tweet_noparams(tweet_id=None):
     if not request.content_type == 'application/json':
         return "not json",400
      
-    data = json.loads(request.data)   
+    data = json.loads(str(request.data.decode('utf-8')))
     if 'access_token' not in data:
         return "No access_token!",401
     user = access_token_user(data['access_token'])
@@ -181,7 +184,7 @@ def _get_tweet_data(user_id):
     #for row in cur.fetchall():
     #    tweets.append( {"id" : row[0], "text" : row[1], "date" : row[2], "profile": get_username_from_id(user_id) , "uri" : '/tweet/'+str(row[0])  }  )
     
-    tweets = [ {"id".encode('utf-8') : row[0], "text".encode('utf-8') : row[1].encode('utf-8'), "date".encode('utf-8') : row[2].encode('utf-8'),   "uri".encode('utf-8') : '/tweet/'+str(row[0])} for row in cur.fetchall() ]  
+    tweets = [ {"id" : row[0], "text" : row[1], "date": row[2],   "uri" : '/tweet/'+str(row[0])} for row in cur.fetchall() ]  
     
     return tweets
     
@@ -200,18 +203,18 @@ def profile(username):
 #        del tweets[profile]
 #        import ipdb;  ipdb.set_trace()
         profileinfo =    {
-            'user_id'  : result_user[0], 
-            'username' : str(result_user[1]), 
-            'first_name': result_user[2],
-            'last_name': result_user[3], 
-            'birth_date': result_user[4],
-            'tweet': tweets,
-            'tweet_count': len ( tweets )
+            "user_id"  : result_user[0], 
+            "username" : str(result_user[1]), 
+            "first_name": result_user[2],
+            "last_name": result_user[3], 
+            "birth_date": result_user[4],
+            "tweet": tweets,
+            "tweet_count": len ( tweets )
         }  
  
 #       
         resp = Response(response=json.dumps( profileinfo ) ,    status=200,      content_type="application/json") 
-        resp.charset='utf-8'
+        #resp.charset='utf-8'
   
         
         #return json.dumps(profileinfo), 200, {'Content-Type': JSON_MIME_TYPE}
@@ -224,7 +227,7 @@ def profile(username):
 def profile_noparams(tweet_id=None):
     if not request.content_type == 'application/json':
         return "not json",400
-    data = json.loads(request.data)   
+    data = json.loads(str(request.data.decode('utf-8')))
     if 'access_token' not in data:
         return "No access_token!",401
     user = access_token_user(data['access_token'])
