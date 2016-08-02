@@ -17,18 +17,6 @@ def connect_db(db_name):
 def before_request():
     g.db = connect_db(app.config['DATABASE'])
     
-    
-"""
-#edit to verify access token
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'username' not in session:
-            return redirect(url_for('login', next=request.url))
-        return f(*args, **kwargs)
-    return decorated_function
-"""
-
 
 @app.errorhandler(404)
 def not_found(e):
