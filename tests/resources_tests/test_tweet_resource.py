@@ -16,13 +16,13 @@ class TweetResource(AuthorizedTwitterAPITestCase):
         self.assertTrue('content' in data)
         self.assertTrue('date' in data)
         self.assertTrue('profile' in data)
-        self.assertTrue('uri' in data)
+        self.assertTrue('url' in data)
 
         self.assertEqual(data['id'], 1)
         self.assertEqual(data['content'], "Tweet 1 testuser1")
         self.assertEqual(data['date'], "2016-06-01T05:13:00")
         self.assertEqual(data['profile'], "/profile/testuser1")
-        self.assertEqual(data['uri'], "/tweet/1")
+        self.assertEqual(data['url'], "/tweet/1")
 
     def test_get_tweet_by_id_doesnt_exist(self):
         response = self.client.get('/tweet/99')

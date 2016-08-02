@@ -1,4 +1,5 @@
 from functools import wraps
+from hashlib import md5 
 
 JSON_MIME_TYPE = 'application/json'
 
@@ -6,7 +7,8 @@ JSON_MIME_TYPE = 'application/json'
 def auth_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # implement your logic here
+        if 'Authorization' not in request.headers:
+            abort(401)
         return f(*args, **kwargs)
     return decorated_function
 
@@ -14,6 +16,7 @@ def auth_only(f):
 def json_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # implement your logic here
+        if not request.is_json:
+            abort(400)
         return f(*args, **kwargs)
     return decorated_function
