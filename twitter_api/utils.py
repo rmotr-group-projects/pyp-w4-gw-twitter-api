@@ -18,14 +18,17 @@ def before_request():
 def auth_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'access_token' in kwargs:
+        if request.content_type != JSON_MIME_TYPE:
+            abort(400)
+        elif 'access_token' in request.json:
             # Checks if token exists
-            if g.db.execute('SELECT access_token FROM auth WHERE access_token=?',(kwargs['access_token'])).fetchone():
+            token = str(request.json['access_token'])
+            if g.db.execute('SELECT access_token FROM auth WHERE access_token=?',(token,)).fetchone():
                 return f(*args, **kwargs)
         abort(401)
     return decorated_function
 
-# Make sure content is suppose to be JSON
+# Makes sure content is JSON
 def json_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):

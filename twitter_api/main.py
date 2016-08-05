@@ -143,17 +143,23 @@ def tweet():
 
 @app.errorhandler(404)
 def not_found(e):
-    return 'Page not found', 404
+    return '', 404
 
 @app.errorhandler(401)
 def not_found(e):
-    return 'Not Authorized?', 401
+    return '', 401
 
-def generate_token():
-    return '1234'
-    
+
 def hash_function(text):
     return md5(text.encode('utf-8')).hexdigest()
+    
+    
+def generate_token():
+    # Simple authentication token generator
+    hexd = '0123456789abcdefABCDEF'
+    random_hexd = random.choice(hexd)
+    a_token = md5(random_hexd.encode('utf-8')).hexdigest()
+    return a_token
     
 def action_query(query, subs):
     g.db.execute(query, subs)
