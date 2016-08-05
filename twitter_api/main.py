@@ -101,7 +101,12 @@ def get_profile(username):
                         'uri': "/tweet/{}".format(tweet[0])
                         }
             user_tweets.append(new_tweet)
-        
+            # print(tweet[1])
+            # print(type(tweet[1]))
+            # print(parse(tweet[1]))
+            # print(type(parse(tweet[1])))
+            # print(parse(tweet[1]).isoformat())
+            # print(type(parse(tweet[1]).isoformat()))
         user_data['tweet'] = user_tweets
         user_data['tweet_count'] = len(user_tweets)
         
@@ -178,9 +183,7 @@ def post_tweet():
 @auth_only
 def delete_tweet(tweet_id):
     data = request.json
-    if 'access_token' not in data:
-        abort(401)
-        
+    
     # Fetch user_id from table tweet.
     # Compare it with user_id pertaining to posted access_token.
     user_id = active_user_id_from_token(data['access_token'])
