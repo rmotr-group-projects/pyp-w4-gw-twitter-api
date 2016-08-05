@@ -31,11 +31,6 @@ def login():
     if not all([param in data for param in expected_request_params]):
       abort(400)
     
-    # Checks if user trying to login already has a token active
-    # Maybe since we added this, we can make our own test case to see if it works?
-    if not g.db.execute("SELECT user_id, username FROM auth JOIN user ON \
-                        auth.user_id = user.id WHERE username=?;", (data['username'],)).fetchall():
-        pass
     
     users = g.db.execute("SELECT username, password, id FROM user").fetchall()
     for user in users:
@@ -44,13 +39,21 @@ def login():
         if data['username'] == user[0]: 
             # Checks to see if password is correct. Otherwise 401 error.
             if hash_function(data['password']) == user[1]:
-                # If login is succesful return a status code of 201 along with an access token.
-                # INSERT access token into auth table
-                token = generate_token()
-                g.db.execute("INSERT INTO auth (access_token, user_id) VALUES (?, ?)", (token, user[2]))
-                g.db.commit()
-                response_json = json.dumps({'access_token': token})
-                return Response(response_json, status=201, mimetype='application/json')
+                # Checks if user trying to login already has a token active
+                # Security first; processing power spent is not worth the security risk of having this before user:pass check
+                token = token_exists(data['username'])
+                if not token:
+                    # If login is succesful return a status code of 201 along with an access token.
+                    # INSERT access token into auth table
+                    token = generate_token()
+                    g.db.execute("INSERT INTO auth (access_token, user_id) VALUES (?, ?)", (token, user[2]))
+                    g.db.commit()
+                    response_json = json.dumps({'access_token': token})
+                    return Response(response_json, status=201, mimetype='application/json')
+                else:
+                    # Return the token
+                    response_json = json.dumps({'access_token': token})
+                    return Response(response_json, status=200, mimetype='application/json')
             else:
                 abort(401)
     abort(404)
@@ -74,7 +77,6 @@ def logout():
 @app.route('/profile/<username>')
 def get_profile(username):
     # Get all data for username
-
     cursor = g.db.execute("SELECT id, username, first_name, last_name, birth_date \
                         FROM user WHERE username = ?;", (username,))
     query_user = cursor.fetchone()
@@ -101,12 +103,6 @@ def get_profile(username):
                         'uri': "/tweet/{}".format(tweet[0])
                         }
             user_tweets.append(new_tweet)
-            # print(tweet[1])
-            # print(type(tweet[1]))
-            # print(parse(tweet[1]))
-            # print(type(parse(tweet[1])))
-            # print(parse(tweet[1]).isoformat())
-            # print(type(parse(tweet[1]).isoformat()))
         user_data['tweet'] = user_tweets
         user_data['tweet_count'] = len(user_tweets)
         
@@ -216,7 +212,11 @@ def active_user_id_from_token(token):
     user_obj = g.db.execute("SELECT user_id, access_token FROM auth WHERE access_token=?;", (token,)).fetchone()
     return user_obj[0]
     
-# def action_query(query, subs):
-#     g.db.execute(query, subs)
-#     g.db.commit()
-#     return
+# Determines whether a token exists via a username, if it does return token, if not return None
+def token_exists(username):
+    cursor = g.db.execute("SELECT user_id, username, access_token FROM auth JOIN user ON \
+            auth.user_id = user.id WHERE username=?;", (username,)).fetchone()
+    if cursor:
+        return cursor[2]
+    else:
+        return

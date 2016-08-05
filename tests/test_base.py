@@ -45,7 +45,9 @@ class BaseTwitterAPITestCase(unittest.TestCase):
         self.db.execute('INSERT INTO "tweet" ("id", "user_id", "content", "created") VALUES (1, 1, "Tweet 1 testuser1", "2016-06-01 05:13:00");')
         self.db.execute('INSERT INTO "tweet" ("id", "user_id", "content", "created") VALUES (2, 1, "Tweet 2 testuser1", "2016-06-01 05:22:00");')
         self.db.execute('INSERT INTO "tweet" ("id", "user_id", "content", "created") VALUES (3, 2, "Tweet 1 testuser2", "2016-06-01 05:38:00");')
-
+        
+        self.db.execute('INSERT INTO "user" ("id", "username", "password") VALUES (999, "tokenUSER", "{}");'.format(md5('1234'.encode('utf-8')).hexdigest()))
+        self.db.execute('INSERT INTO "auth" VALUES (999, 999, "tokentest123", "2016-06-02 05:38:00");')
         self.db.commit()
 
 

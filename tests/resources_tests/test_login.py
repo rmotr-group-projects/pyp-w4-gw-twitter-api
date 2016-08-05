@@ -8,7 +8,7 @@ class LoginResourceTestCase(BaseTwitterAPITestCase):
     def test_login_successful(self):
         # Precondition
         cursor = self.db.execute("select * from auth;")
-        self.assertEqual(len(cursor.fetchall()), 0)
+        self.assertEqual(len(cursor.fetchall()), 1)
 
         data = {
             "username": "testuser1",
@@ -28,7 +28,7 @@ class LoginResourceTestCase(BaseTwitterAPITestCase):
 
         # Postconditions
         cursor = self.db.execute("select * from auth;")
-        self.assertEqual(len(cursor.fetchall()), 1)
+        self.assertEqual(len(cursor.fetchall()), 2)
 
         cursor = self.db.execute("select user_id, access_token from auth WHERE access_token=:access_token;", {'access_token': access_token})
         auth_obj = cursor.fetchone()
@@ -40,7 +40,7 @@ class LoginResourceTestCase(BaseTwitterAPITestCase):
     def test_login_missing_password(self):
         # Precondition
         cursor = self.db.execute("select * from auth;")
-        self.assertEqual(len(cursor.fetchall()), 0)
+        self.assertEqual(len(cursor.fetchall()), 1)
 
         data = {
             "username": "testuser1"
@@ -55,12 +55,12 @@ class LoginResourceTestCase(BaseTwitterAPITestCase):
 
         # Postconditions
         cursor = self.db.execute("select * from auth;")
-        self.assertEqual(len(cursor.fetchall()), 0)
+        self.assertEqual(len(cursor.fetchall()), 1)
 
     def test_login_wrong_password(self):
         # Precondition
         cursor = self.db.execute("select * from auth;")
-        self.assertEqual(len(cursor.fetchall()), 0)
+        self.assertEqual(len(cursor.fetchall()), 1)
 
         data = {
             "username": "testuser1",
@@ -76,12 +76,12 @@ class LoginResourceTestCase(BaseTwitterAPITestCase):
 
         # Postconditions
         cursor = self.db.execute("select * from auth;")
-        self.assertEqual(len(cursor.fetchall()), 0)
+        self.assertEqual(len(cursor.fetchall()), 1)
 
     def test_login_username_doesnt_exist(self):
         # Precondition
         cursor = self.db.execute("select * from auth;")
-        self.assertEqual(len(cursor.fetchall()), 0)
+        self.assertEqual(len(cursor.fetchall()), 1)
 
         data = {
             "username": "JUNK-1",
@@ -97,4 +97,25 @@ class LoginResourceTestCase(BaseTwitterAPITestCase):
 
         # Postconditions
         cursor = self.db.execute("select * from auth;")
-        self.assertEqual(len(cursor.fetchall()), 0)
+        self.assertEqual(len(cursor.fetchall()), 1)
+
+    def test_login_already_has_token(self):
+        # Precondition
+        cursor = self.db.execute("select * from auth;")
+        self.assertEqual(len(cursor.fetchall()), 1)
+
+        data = {
+            "username": "tokenUSER",
+            "password": "1234"
+        }
+
+        response = self.client.post(
+            '/login',
+            data=json.dumps(data),
+            content_type='application/json')
+
+        self.assertEqual(response.status_code, 200)
+
+        # Postconditions
+        cursor = self.db.execute("select * from auth;")
+        self.assertEqual(len(cursor.fetchall()), 1)

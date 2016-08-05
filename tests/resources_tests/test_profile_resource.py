@@ -79,10 +79,7 @@ class ProfileResourceTestCase(AuthorizedTwitterAPITestCase):
         cursor = self.db.execute("select * from user where id = 1;")
         expected = (1, 'testuser1', '022c0b524a0258fc73d5ce9bcb0e5aa2',
                     'New name', 'New last name', '1988-01-01')
-        result = cursor.fetchone()
-        # print('\nEXPECTED:\n{}').format(expected)
-        # print('\nRETURNED:\n{}').format(result)
-        self.assertEqual(result, expected)
+        self.assertEqual(cursor.fetchone(), expected)
 
     def test_post_profile_missing_required_fields(self):
         # Preconditions
@@ -164,6 +161,8 @@ class ProfileResourceTestCase(AuthorizedTwitterAPITestCase):
 
     def test_post_profile_invalid_access_token(self):
         # Preconditions
+        
+        # self.db.execute('INSERT INTO "auth" ("id", "user_id", "access_token", "created") VALUES (999, 999, "tokentest123", "2016-06-02 05:38:00");')
         cursor = self.db.execute("select * from user where id = 1;")
         expected = (1, 'testuser1', '022c0b524a0258fc73d5ce9bcb0e5aa2',
                     'Test', 'User', '2016-01-30')
@@ -187,3 +186,4 @@ class ProfileResourceTestCase(AuthorizedTwitterAPITestCase):
         expected = (1, 'testuser1', '022c0b524a0258fc73d5ce9bcb0e5aa2',
                     'Test', 'User', '2016-01-30')
         self.assertEqual(cursor.fetchone(), expected)
+        
