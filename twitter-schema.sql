@@ -37,4 +37,5 @@ CREATE TABLE auth (
   FOREIGN KEY(user_id) REFERENCES user(id)
 );
 
-CREATE UNIQUE INDEX auth_access_token_idx ON auth (access_token);
+CREATE UNIQUE INDEX auth_access_token_idx ON auth (access_token)
+
