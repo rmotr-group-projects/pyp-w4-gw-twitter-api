@@ -218,5 +218,4 @@ def token_exists(username):
             auth.user_id = user.id WHERE username=?;", (username,)).fetchone()
     if cursor:
         return cursor[2]
-    else:
-        return
+    return
