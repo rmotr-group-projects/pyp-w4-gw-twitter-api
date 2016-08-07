@@ -11,6 +11,8 @@ from twitter_api.utils import md5
 
 
 class BaseTwitterAPITestCase(unittest.TestCase):
+    
+    maxDiff = None
 
     def setUp(self):
         app.config['TESTING'] = True
