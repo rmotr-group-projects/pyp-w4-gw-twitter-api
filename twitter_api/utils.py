@@ -1,4 +1,5 @@
 from functools import wraps
+from hashlib import md5
 
 JSON_MIME_TYPE = 'application/json'
 
