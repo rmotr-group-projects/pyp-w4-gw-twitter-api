@@ -1,20 +1,52 @@
+import sqlite3
+
 from functools import wraps
+
+from flask import Flask
+from flask import request, make_response, jsonify, g
+import string
+
 from hashlib import md5
 
 JSON_MIME_TYPE = 'application/json'
 
 
-def auth_only(f):
+def valid_json_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # implement your logic here
+        if not request.json: 
+            return make_response(jsonify({'error': 'Request was not valid JSON, or was empty. Unauthorised'}), 401)
         return f(*args, **kwargs)
     return decorated_function
-
-
-def json_only(f):
+    
+    
+def valid_token_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # implement your logic here
-        return f(*args, **kwargs)
+        if 'access_token'.encode('utf-8') not in request.json:
+           return make_response(jsonify({'error': 'No access_token was supplied. Unauthorised.'}), 401)
+        # Now retrieve a list of all authorised users
+        sql_string = '''
+            SELECT
+            access_token
+            FROM
+            auth;
+        '''
+        cursor = g.db.execute(sql_string)
+        results = cursor.fetchall()
+        print("results is ", results)
+        if len(results) == 0:
+            return make_response(jsonify({'error': 'Access token is invalid or has expired. Please log in again'}), 401)
+        authorised = False;
+        for result in results:
+            if result[0] == request.json['access_token'].encode('utf-8'):
+                authorised = True;
+                print("result[0] is ", result[0])
+                # Access token is present in 'auth' table. Proceed with function
+        # Supplied access token not found in 'auth' table.
+        if authorised:
+            print("Authorised, so about to return the original function")
+            return f(*args, **kwargs)
+        else:
+            return make_response(jsonify({'error': 'Access token is invalid or has expired. Please log in again'}), 401)
     return decorated_function

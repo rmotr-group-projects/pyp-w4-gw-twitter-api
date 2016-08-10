@@ -8,8 +8,13 @@ import os
 import hashlib
 import string
 import random
+import collections
+
+from utils import *
 
 app = Flask(__name__)
+
+app.config['JSON_SORT_KEYS'] = False
 
 
 def connect_db(db_name):
@@ -20,45 +25,6 @@ def connect_db(db_name):
 def before_request():
     g.db = connect_db(app.config['DATABASE'])
 
-def valid_json_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not request.json: 
-            return make_response(jsonify({'error': 'Request was not valid JSON, or was empty. Unauthorised'}), 401)
-        return f(*args, **kwargs)
-    return decorated_function
-    
-    
-def valid_token_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'access_token'.encode('utf-8') not in request.json:
-           return make_response(jsonify({'error': 'No access_token was supplied. Unauthorised.'}), 401)
-        # Now retrieve a list of all authorised users
-        sql_string = '''
-            SELECT
-            access_token
-            FROM
-            auth;
-        '''
-        cursor = g.db.execute(sql_string)
-        results = cursor.fetchall()
-        print("results is ", results)
-        if len(results) == 0:
-            return make_response(jsonify({'error': 'Access token is invalid or has expired. Please log in again'}), 401)
-        authorised = False;
-        for result in results:
-            if result[0] == request.json['access_token'].encode('utf-8'):
-                authorised = True;
-                print("result[0] is ", result[0])
-                # Access token is present in 'auth' table. Proceed with function
-        # Supplied access token not found in 'auth' table.
-        if authorised:
-            print("Authorised, so about to return the original function")
-            return f(*args, **kwargs)
-        else:
-            return make_response(jsonify({'error': 'Access token is invalid or has expired. Please log in again'}), 401)
-    return decorated_function
 
 @app.route('/login', methods=['POST'])
 @valid_json_required
@@ -159,7 +125,6 @@ def logout():
        return make_response(jsonify({'error': 'Internal server error. Logout failed.'}), 500)
 
 @app.route('/profile/<username>', methods=['GET'])
-@valid_json_required
 def profile(username):
     # Get the requested profile
     sql_string = '''
@@ -169,10 +134,13 @@ def profile(username):
         first_name,
         last_name,
         birth_date
+        FROM
+        user
         WHERE
         username = '{}';
     '''
     sql_string = sql_string.format(username)
+    print("sql_string is {}".format(sql_string))
     
     try:
         cursor = g.db.execute(sql_string)
@@ -186,14 +154,15 @@ def profile(username):
        return make_response(jsonify({'error': 'More than one user with this username exists! Aborting.'}), 500)
     
     # Now we begin to construct the JSON data to return
-    json_dict = {
-        "user_id": results[0][0],
-        "username": results[0][1],
-        "first_name": results[0][2],
-        "last_name": results[0][3],
-        "birth_date": results[0][4],
-        "tweets": []
-        }
+    json_dict = collections.OrderedDict([
+        ("user_id", results[0][0]),
+        ("username", results[0][1]),
+        ("first_name", results[0][2]),
+        ("last_name", results[0][3]),
+        ("birth_date", results[0][4]),
+        ("tweet", []),
+        ("tweet_count", 0)
+       ]) 
     
     # Next, we need to retrieve the lsit of tweets corresponding to this user
     sql_string = '''
@@ -202,11 +171,13 @@ def profile(username):
         content,
         created
         FROM
-        tweets
+        tweet
         WHERE
-        user_id = {}
+        user_id = {};
     '''
     sql_string = sql_string.format(json_dict['user_id'])
+    print("sql_string is {}".format(sql_string))
+    
     try:
         cursor = g.db.execute(sql_string)
     except:
@@ -220,14 +191,15 @@ def profile(username):
         for result in results:
             tweet_id = result[0]
             uri_string = "/tweet/{}".format(tweet_id)
-            tweet = {
-                "id": tweet_id,
-                "text": result[1],
-                "date": result[2],
-                "uri": uri_string 
-                }
+            tweet = collections.OrderedDict([
+                ("id", tweet_id),
+                ("text", result[1]),
+                ("date", result[2]),
+                ("uri", uri_string)
+               ]) 
             tweets.append(tweet)
-        json_dict['tweets'] = tweets
+        json_dict['tweet'] = tweets
+        json_dict['tweet_count'] = len(results)
     #Now, we convert the dictionary to JSON and return it
     return make_response(jsonify(json_dict), 200) 
 
