@@ -14,8 +14,9 @@ JSON_MIME_TYPE = 'application/json'
 def valid_json_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not request.json: 
-            return make_response(jsonify({'error': 'Request was not valid JSON, or was empty. Unauthorised'}), 401)
+        if request.get_json() == None:
+            return make_response(jsonify({'error': 'Request was not valid JSON. Bad request'}), 400)
+        print("request.json is ", request.json)
         return f(*args, **kwargs)
     return decorated_function
     

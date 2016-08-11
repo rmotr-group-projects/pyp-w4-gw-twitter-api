@@ -125,7 +125,7 @@ def logout():
        return make_response(jsonify({'error': 'Internal server error. Logout failed.'}), 500)
 
 @app.route('/profile/<username>', methods=['GET'])
-def profile(username):
+def public_profile(username):
     # Get the requested profile
     sql_string = '''
         SELECT
@@ -204,12 +204,274 @@ def profile(username):
     return make_response(jsonify(json_dict), 200) 
 
 
-# TODO: Not sure whether I will require this...
-# @app.errorhandler(404)
-# def not_found(e):
-#     return '', 404
+@app.route('/profile', methods=['POST'])
+@valid_json_required
+@valid_token_required
+def update_profile():
+    # First, we need to check that all required fields have been supplied
+    required_fields = ['first_name', 'last_name', 'birth_date']
+    for field in required_fields:
+        if field not in request.json:
+            return make_response(jsonify({'error': 'One or more required fields are missing. Cannot update user profile'}), 400) 
+            
+    # Next, we need to get the user_id from the supplied access token
+    sql_string = '''
+        SELECT
+        user_id
+        FROM
+        auth
+        WHERE
+        access_token = "{}";
+    '''
+    sql_string = sql_string.format(request.json['access_token'].encode('utf-8'))
+    print("sql_string is {}".format(sql_string))
+    
+    try:
+        cursor = g.db.execute(sql_string)
+    except:
+        return make_response(jsonify({'error': 'Internal server error. Could not update user profile'}), 500) 
+    results = cursor.fetchall()
+    print("results is {}".format(results))
+    
+    sql_string = '''
+        UPDATE
+        user
+        SET
+        first_name = '{}',
+        last_name = '{}',
+        birth_date = '{}'
+        WHERE
+        id = {};
+    '''
+    sql_string = sql_string.format(
+        request.json['first_name'],
+        request.json['last_name'],
+        request.json['birth_date'],
+        results[0][0]
+        )
+    print("sql_string is {}".format(sql_string))
+    try:
+        cursor = g.db.execute(sql_string)
+        g.db.commit()
+    except:
+        return make_response(jsonify({'error': 'Internal server error. Could not update user profile'}), 500) 
+    print("results is {}".format(results))
+    return make_response(jsonify({'Success': 'Profile successfully updated'}), 201) 
 
+@app.route('/tweet/<tweet_id>', methods=['GET'])
+def retrieve_tweet(tweet_id):
+    try:
+        tweet_id = int(tweet_id)
+    except ValueError:
+        return make_response(jsonify({'error': 'Bad request. Tweets can only be requested by their numeric ID'}), 400) 
+        
+    sql_string = '''
+        SELECT
+        content,
+        created,
+        user_id
+        FROM
+        tweet
+        WHERE
+        id = {}
+    '''
+    sql_string = sql_string.format(tweet_id)
+    print("sql_string is {}".format(sql_string))
+    
+    try:
+        cursor = g.db.execute(sql_string)
+    except:
+        return make_response(jsonify({'error': 'Internal server error. Could not retrieve requested tweet'}), 500) 
+        
+    results_1 = cursor.fetchall()
+    print("results_1 is {}".format(results_1))
 
-# @app.errorhandler(400)
-# def bad_request(e):
-#     return '', 400
+    if len(results_1) == 0:
+       return make_response(jsonify({'error': 'Could not find specified tweet'}), 404)
+    if len(results_1) >1:
+       return make_response(jsonify({'error': 'More than one tweet with this id exists! Aborting.'}), 500)
+    #If we get here, we have a tweet to return
+    #We need the username to return the profile path
+    sql_string = '''
+        SELECT
+        username
+        FROM
+        user
+        WHERE
+        id = {}
+    '''
+    sql_string = sql_string.format(results_1[0][2])
+    print("sql_string is {}".format(sql_string))
+    
+    try:
+        cursor = g.db.execute(sql_string)
+    except:
+        return make_response(jsonify({'error': 'Internal server error. Could not retrieve requested tweet'}), 500) 
+        
+    results_2 = cursor.fetchall()
+    print("results_2 is {}".format(results_2))
+    
+    
+    # Now we begin to construct the JSON data to return
+    profile_string = "/profile/{}".format(results_2[0][0])
+    uri_string = "/tweet/{}".format(tweet_id)
+    json_dict = collections.OrderedDict([
+        ("id", tweet_id),
+        ("content", results_1[0][0]),
+        ("date", results_1[0][1]),
+        ("profile", profile_string),
+        ("uri", uri_string)
+       ]) 
+
+    # Finally, we return the JSON version of the dictionary
+    return make_response(jsonify(json_dict), 200)
+    
+    
+
+@app.route('/tweet', methods=['POST'])
+@valid_json_required
+@valid_token_required
+def create_tweet():
+    # First check that the text of the tweet has been supplied
+    tweet_text = request.json.get('content','').strip()
+    if len(tweet_text) == 0:
+        return make_response(jsonify({'error': 'Tweet text not supplied. Cannot create tweet.'}), 400) 
+    
+    # Now get the user_id associated with the supplied access token
+    sql_string = '''
+        SELECT
+        user_id
+        FROM
+        auth
+        WHERE
+        access_token = "{}"
+    '''
+    sql_string = sql_string.format(request.json['access_token'])
+    print("sql_string is {}".format(sql_string))
+    
+    try:
+        cursor = g.db.execute(sql_string)
+    except:
+        return make_response(jsonify({'error': 'Internal server error. Could not create tweet.'}), 500) 
+        
+    results = cursor.fetchall()
+    print("results is {}".format(results))
+    if len(results) == 0:
+        return make_response(jsonify({'error': 'Internal server error. Could not create tweet. Access token not found.'}), 500) 
+    if len(results) > 1:
+        return make_response(jsonify({'error': 'Internal server error. Could not create tweet. More than one instance of the same access token found.'}), 500) 
+        
+    sql_string = '''
+        INSERT
+        INTO
+        tweet
+        (
+        user_id,
+        content
+        )
+        VALUES
+        (
+        {},
+        "{}"
+        )
+        ;
+    '''
+    sql_string = sql_string.format(
+        results[0][0],
+        tweet_text
+        )
+    print("sql_string is {}".format(sql_string))
+    try:
+        cursor = g.db.execute(sql_string)
+        g.db.commit()
+    except:
+        return make_response(jsonify({'error': 'Internal server error. Could not create tweet'}), 500) 
+    results = cursor.fetchall()
+    print("results is {}".format(results))
+    
+    return make_response(jsonify({'Success': 'Tweet created'}), 201) 
+    
+@app.route('/tweet/<tweet_id>', methods=['DELETE'])
+@valid_json_required
+@valid_token_required
+def delete_tweet(tweet_id):
+    #First check if the tweet id is a valid number
+    try:
+        tweet_id = int(tweet_id)
+    except ValueError:
+        return make_response(jsonify({'error': 'Bad request. Tweets can only be requested by their numeric ID'}), 400) 
+        
+    #Now see if this tweet actually exists and who it belongs to
+    sql_string = '''
+        SELECT
+        user_id
+        FROM
+        tweet
+        WHERE
+        id = {}
+    '''
+    sql_string = sql_string.format(tweet_id)
+    print("sql_string is {}".format(sql_string))
+    
+    try:
+        cursor = g.db.execute(sql_string)
+    except:
+        return make_response(jsonify({'error': 'Internal server error. Could not delete tweet.'}), 500)
+        
+    results = cursor.fetchall()
+    print("results is {}".format(results))
+    
+    if len(results) == 0:
+        return make_response(jsonify({'error': 'Tweet with id {} not found. Cannot delete'.format(tweet_id)}), 404)
+    if len(results) > 1:
+        return make_response(jsonify({'error': 'Internal server error. Could not delete tweet. More than one instance of the same tweet found.'}), 500) 
+    tweet_owner = results[0][0]
+        
+    # Now get the user_id associated with the supplied access token
+    sql_string = '''
+        SELECT
+        user_id
+        FROM
+        auth
+        WHERE
+        access_token = "{}"
+    '''
+    sql_string = sql_string.format(request.json['access_token'])
+    print("sql_string is {}".format(sql_string))
+    
+    try:
+        cursor = g.db.execute(sql_string)
+    except:
+        return make_response(jsonify({'error': 'Internal server error. Could not create tweet.'}), 500) 
+        
+    results = cursor.fetchall()
+    print("results is {}".format(results))
+    if len(results) == 0:
+        return make_response(jsonify({'error': 'Internal server error. Could not delete tweet. Access token not found.'}), 500) 
+    if len(results) > 1:
+        return make_response(jsonify({'error': 'Internal server error. Could not delete tweet. More than one instance of the same access token found.'}), 500) 
+    authorised_user = results[0][0] 
+    # Check that the owner of the twee to be deleted and the authorised user are the same
+    if authorised_user != tweet_owner:
+        return make_response(jsonify({'error': 'You are not the owner of this tweet, so you cannot delete it.'}), 401) 
+        
+    # Now that we are sure that the specified tweet exists, and that the user is the tweet owner, we can delete it.
+    sql_string = '''
+        DELETE
+        FROM
+        tweet
+        WHERE
+        id = {}
+        ;
+    '''
+    sql_string = sql_string.format(tweet_id)
+    print("sql_string is {}".format(sql_string))
+    
+    try:
+        g.db.execute(sql_string)
+        g.db.commit()
+    except:
+        return make_response(jsonify({'error': 'Internal server error. Could not delete tweet.'}), 500) 
+        
+    return make_response(jsonify({'success': 'Tweet with id {} successfully deleted'.format(tweet_id)}), 204) 
+    
