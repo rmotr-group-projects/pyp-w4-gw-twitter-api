@@ -63,7 +63,6 @@ def login():
         
     encoded_password = raw_password.encode('utf-8')
     hashed_password = hashlib.md5(encoded_password).hexdigest()
-    print("hashed_password is {} and results[0][2] is {} ".format(hashed_password, results[0][2]))
     if hashed_password != results[0][2]:
         return make_response(jsonify({'error': 'Password incorrect. Please try again'}), 401)
     else:
@@ -89,7 +88,6 @@ def login():
             );
         '''
         sql_string = sql_string.format(results[0][0], token)
-        print("sql_string is {}".format(sql_string))
         
         try:
             g.db.execute(sql_string)
@@ -97,7 +95,6 @@ def login():
             json_response = {
                 'access_token': token
             }
-            print("finished adding to the database and about to return the json response")
             return make_response(jsonify(json_response), 201)
         except:
             return make_response(jsonify({'error': 'Error saving token to the database. Login failed.'}), 500) 
@@ -106,7 +103,6 @@ def login():
 @valid_json_required
 @valid_token_required
 def logout():
-    print("entering logout()")
     sql_string = '''
         DELETE
         FROM
@@ -117,10 +113,8 @@ def logout():
     sql_string = sql_string.format(request.json['access_token'])
     try:
         # Execute the SQL commant
-        print("about to execute the following sql_string:", sql_string)
         g.db.execute(sql_string)
         g.db.commit()
-        print("commit was succesful, about to return a 204 status")
         return make_response(jsonify({'success': 'Logged out'}), 204)
     except:
        return make_response(jsonify({'error': 'Internal server error. Logout failed.'}), 500)
@@ -141,7 +135,6 @@ def public_profile(username):
         username = '{}';
     '''
     sql_string = sql_string.format(username)
-    print("sql_string is {}".format(sql_string))
     
     try:
         cursor = g.db.execute(sql_string)
@@ -177,7 +170,6 @@ def public_profile(username):
         user_id = {};
     '''
     sql_string = sql_string.format(json_dict['user_id'])
-    print("sql_string is {}".format(sql_string))
     
     try:
         cursor = g.db.execute(sql_string)
@@ -225,14 +217,12 @@ def update_profile():
         access_token = "{}";
     '''
     sql_string = sql_string.format(request.json['access_token'])
-    print("sql_string is {}".format(sql_string))
     
     try:
         cursor = g.db.execute(sql_string)
     except:
         return make_response(jsonify({'error': 'Internal server error. Could not update user profile'}), 500) 
     results = cursor.fetchall()
-    print("results is {}".format(results))
     
     sql_string = '''
         UPDATE
@@ -250,13 +240,11 @@ def update_profile():
         request.json['birth_date'],
         results[0][0]
         )
-    print("sql_string is {}".format(sql_string))
     try:
         cursor = g.db.execute(sql_string)
         g.db.commit()
     except:
         return make_response(jsonify({'error': 'Internal server error. Could not update user profile'}), 500) 
-    print("results is {}".format(results))
     return make_response(jsonify({'Success': 'Profile successfully updated'}), 201) 
 
 @app.route('/tweet/<tweet_id>', methods=['GET'])
@@ -277,7 +265,6 @@ def retrieve_tweet(tweet_id):
         id = {}
     '''
     sql_string = sql_string.format(tweet_id)
-    print("sql_string is {}".format(sql_string))
     
     try:
         cursor = g.db.execute(sql_string)
@@ -285,7 +272,6 @@ def retrieve_tweet(tweet_id):
         return make_response(jsonify({'error': 'Internal server error. Could not retrieve requested tweet'}), 500) 
         
     results_1 = cursor.fetchall()
-    print("results_1 is {}".format(results_1))
 
     if len(results_1) == 0:
        return make_response(jsonify({'error': 'Could not find specified tweet'}), 404)
@@ -302,7 +288,6 @@ def retrieve_tweet(tweet_id):
         id = {}
     '''
     sql_string = sql_string.format(results_1[0][2])
-    print("sql_string is {}".format(sql_string))
     
     try:
         cursor = g.db.execute(sql_string)
@@ -310,7 +295,6 @@ def retrieve_tweet(tweet_id):
         return make_response(jsonify({'error': 'Internal server error. Could not retrieve requested tweet'}), 500) 
         
     results_2 = cursor.fetchall()
-    print("results_2 is {}".format(results_2))
     
     
     # Now we begin to construct the JSON data to return
@@ -348,7 +332,6 @@ def create_tweet():
         access_token = "{}"
     '''
     sql_string = sql_string.format(request.json['access_token'])
-    print("sql_string is {}".format(sql_string))
     
     try:
         cursor = g.db.execute(sql_string)
@@ -356,7 +339,6 @@ def create_tweet():
         return make_response(jsonify({'error': 'Internal server error. Could not create tweet.'}), 500) 
         
     results = cursor.fetchall()
-    print("results is {}".format(results))
     if len(results) == 0:
         return make_response(jsonify({'error': 'Internal server error. Could not create tweet. Access token not found.'}), 500) 
     if len(results) > 1:
@@ -381,14 +363,12 @@ def create_tweet():
         results[0][0],
         tweet_text
         )
-    print("sql_string is {}".format(sql_string))
     try:
         cursor = g.db.execute(sql_string)
         g.db.commit()
     except:
         return make_response(jsonify({'error': 'Internal server error. Could not create tweet'}), 500) 
     results = cursor.fetchall()
-    print("results is {}".format(results))
     
     return make_response(jsonify({'Success': 'Tweet created'}), 201) 
     
@@ -412,7 +392,6 @@ def delete_tweet(tweet_id):
         id = {}
     '''
     sql_string = sql_string.format(tweet_id)
-    print("sql_string is {}".format(sql_string))
     
     try:
         cursor = g.db.execute(sql_string)
@@ -420,7 +399,6 @@ def delete_tweet(tweet_id):
         return make_response(jsonify({'error': 'Internal server error. Could not delete tweet.'}), 500)
         
     results = cursor.fetchall()
-    print("results is {}".format(results))
     
     if len(results) == 0:
         return make_response(jsonify({'error': 'Tweet with id {} not found. Cannot delete'.format(tweet_id)}), 404)
@@ -438,7 +416,6 @@ def delete_tweet(tweet_id):
         access_token = "{}"
     '''
     sql_string = sql_string.format(request.json['access_token'])
-    print("sql_string is {}".format(sql_string))
     
     try:
         cursor = g.db.execute(sql_string)
@@ -446,7 +423,6 @@ def delete_tweet(tweet_id):
         return make_response(jsonify({'error': 'Internal server error. Could not create tweet.'}), 500) 
         
     results = cursor.fetchall()
-    print("results is {}".format(results))
     if len(results) == 0:
         return make_response(jsonify({'error': 'Internal server error. Could not delete tweet. Access token not found.'}), 500) 
     if len(results) > 1:
@@ -466,7 +442,6 @@ def delete_tweet(tweet_id):
         ;
     '''
     sql_string = sql_string.format(tweet_id)
-    print("sql_string is {}".format(sql_string))
     
     try:
         g.db.execute(sql_string)
