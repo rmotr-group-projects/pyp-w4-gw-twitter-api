@@ -10,7 +10,7 @@ import string
 import random
 import collections
 
-from utils import *
+from .utils import *
 
 app = Flask(__name__)
 
@@ -29,10 +29,10 @@ def before_request():
 @app.route('/login', methods=['POST'])
 @valid_json_required
 def login():
-    if not 'username'.encode('utf-8') in request.json:
-      abort(400)
+    if not 'username' in request.get_json():
+      return make_response(jsonify({'error': 'No username given. Cannot log in.'}), 400) 
     # First get the username
-    username = request.json['username'].strip()
+    username = request.get_json()['username'].strip()
     if len(username) == 0:
         return make_response(jsonify({'error': 'Supplied username was blank. Cannot log in.'}), 400) 
     sql_string = '''
@@ -56,19 +56,20 @@ def login():
     if 'password' not in request.json:
         return make_response(jsonify({'error': 'No password was supplied. Login failed.'}), 400)
     # Check to see if the password matches
-    raw_password = request.json['password'].strip()
+    raw_password = request.get_json()['password']
     
     if len(raw_password) == 0:
         return make_response(jsonify({'error': 'Supplied password was blank. Cannot log in.'}), 400) 
         
-    hashed_password = hashlib.md5(raw_password.encode(request.charset)).hexdigest()
+    encoded_password = raw_password.encode('utf-8')
+    hashed_password = hashlib.md5(encoded_password).hexdigest()
     print("hashed_password is {} and results[0][2] is {} ".format(hashed_password, results[0][2]))
     if hashed_password != results[0][2]:
         return make_response(jsonify({'error': 'Password incorrect. Please try again'}), 401)
     else:
         # Successfully authenticated. Now we generate a token to send back,
         # and store it in the 'auth' table
-        token_list = random.sample(string.letters + string.digits, 10)
+        token_list = random.sample(string.ascii_letters + string.digits, 10)
         token = ''
         for x in token_list:
             token += x
@@ -223,7 +224,7 @@ def update_profile():
         WHERE
         access_token = "{}";
     '''
-    sql_string = sql_string.format(request.json['access_token'].encode('utf-8'))
+    sql_string = sql_string.format(request.json['access_token'])
     print("sql_string is {}".format(sql_string))
     
     try:

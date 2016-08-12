@@ -24,8 +24,9 @@ def valid_json_required(f):
 def valid_token_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'access_token'.encode('utf-8') not in request.json:
-           return make_response(jsonify({'error': 'No access_token was supplied. Unauthorised.'}), 401)
+        if 'access_token' not in request.get_json():
+            print("access_token not in request.get_json() ({})".format(request.get_json()))
+            return make_response(jsonify({'error': 'No access_token was supplied. Unauthorised.'}), 401)
         # Now retrieve a list of all authorised users
         sql_string = '''
             SELECT
@@ -40,7 +41,7 @@ def valid_token_required(f):
             return make_response(jsonify({'error': 'Access token is invalid or has expired. Please log in again'}), 401)
         authorised = False;
         for result in results:
-            if result[0] == request.json['access_token'].encode('utf-8'):
+            if result[0] == request.json['access_token']:
                 authorised = True;
                 print("result[0] is ", result[0])
                 # Access token is present in 'auth' table. Proceed with function
