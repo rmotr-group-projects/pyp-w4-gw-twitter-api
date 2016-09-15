@@ -98,7 +98,7 @@ GET /tweet/<TWEET-ID>
 200 Ok
 {
   "id": <TWEET-ID>,
-  "text": "Tweet test",
+  "content": "Tweet test",
   "date": "2016-12-31T00:30:19",
   "profile": "/profile/<USERNAME>",
   "uri": "/tweet/<TWEET-ID>"
@@ -110,9 +110,9 @@ GET /tweet/<TWEET-ID>
 (Must be the authorized user. User resolved from token)
 
 ```
-POST /tweet/
+POST /tweet
 {
-  "text": "Tweet test",
+  "content": "Tweet test",
   "access_token": <ACCESS-TOKEN>
 }
 >>>
