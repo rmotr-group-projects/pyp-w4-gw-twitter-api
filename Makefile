@@ -5,7 +5,11 @@ END=" \#\#\# \033[0m\n"
 
 test:
 	@echo $(TAG)Running tests$(END)
-	PYTHONPATH=. py.test -s tests
+	PYTHONPATH=. py.test -s tests -vv --tb=no
+
+test-verbose:
+	@echo $(TAG)Running tests$(END)
+	PYTHONPATH=. py.test -s tests -vv
 
 test-cov:
 	@echo $(TAG)Running tests with coverage$(END)
