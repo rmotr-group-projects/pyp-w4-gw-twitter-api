@@ -13,13 +13,13 @@ class TweetResource(AuthorizedTwitterAPITestCase):
         data = json.loads(response.data.decode(response.charset))
 
         self.assertTrue('id' in data)
-        self.assertTrue('content' in data)
+        self.assertTrue('text' in data)
         self.assertTrue('date' in data)
         self.assertTrue('profile' in data)
         self.assertTrue('uri' in data)
 
         self.assertEqual(data['id'], 1)
-        self.assertEqual(data['content'], "Tweet 1 testuser1")
+        self.assertEqual(data['text'], "Tweet 1 testuser1")
         self.assertEqual(data['date'], "2016-06-01T05:13:00")
         self.assertEqual(data['profile'], "/profile/testuser1")
         self.assertEqual(data['uri'], "/tweet/1")
@@ -39,7 +39,7 @@ class TweetResource(AuthorizedTwitterAPITestCase):
         self.assertEqual(len(cursor.fetchall()), 2)
 
         data = {
-            "content": "API tweet test",
+            "text": "API tweet test",
             "access_token": self.user1_token
         }
         response = self.client.post(
@@ -59,7 +59,7 @@ class TweetResource(AuthorizedTwitterAPITestCase):
         self.assertEqual(len(cursor.fetchall()), 2)
 
         data = {
-            "content": "API tweet test",
+            "text": "API tweet test",
         }
         response = self.client.post(
             '/tweet',
@@ -78,7 +78,7 @@ class TweetResource(AuthorizedTwitterAPITestCase):
         self.assertEqual(len(cursor.fetchall()), 2)
 
         data = {
-            "content": "API tweet test",
+            "text": "API tweet test",
             'access_token': 'JUNK-999-XXX'
         }
         response = self.client.post(
