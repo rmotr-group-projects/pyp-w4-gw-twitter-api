@@ -111,3 +111,48 @@ def profile_update():
     return "Doing a POST Request", 200
     
 
+@app.route('/tweet/<int:tweet_id>')
+def get_tweet(tweet_id):
+    tweet_query = '''select t.id, content, created, username from tweet as t join user as u on t.user_id=u.id and t.id=?;'''
+    tweet_info = g.db.execute(tweet_query, (tweet_id,)).fetchone()
+    if not tweet_info:
+        return '', 404
+    return_json = {
+                   "id" : tweet_info[0],
+                   "content" : tweet_info[1],
+                   "date" : "T".join(tweet_info[2].split(' ')),
+                   "profile" : "/profile/{}".format(tweet_info[3]),
+                   "uri" : "/tweet/{}".format(tweet_id)
+                  }
+    return jsonify(**return_json), 200
+
+
+@app.route('/tweet', methods=['POST'])
+@json_only
+@auth_only
+def create_tweet():
+    post = request.json
+    if 'content' not in post:
+        return '', 400
+    id_query = '''Select user_id from auth where access_token=?'''
+    user_id = g.db.execute(id_query, (post['access_token'],)).fetchone()
+    tweet_query = '''Insert into tweet (user_id, content) Values (?, ?);'''
+    with g.db:
+        g.db.execute(tweet_query,(user_id[0], post['content']))
+    return '', 201
+
+@app.route('/tweet/<int:tweet_id>', methods=['DELETE'])
+@json_only
+@auth_only
+def del_tweet(tweet_id):
+    post = request.json
+    auth_query = '''select t.user_id, access_token from tweet as t left outer join auth as a on t.user_id=a.user_id where t.id=?;'''
+    auth_info = g.db.execute(auth_query, (tweet_id,)).fetchone()
+    if not auth_info:
+        return '', 404
+    if auth_info[1] != post['access_token']:
+        return '', 401
+    delete_query = '''DELETE FROM tweet WHERE id=?'''
+    with g.db:
+        g.db.execute(delete_query,(tweet_id,))
+    return '', 204
