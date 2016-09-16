@@ -1,6 +1,6 @@
 import sqlite3
 import json
-from flask import (Flask, g, request, abort)
+from flask import (Flask, g, request, abort, Response, jsonify)
 import random
 from .utils import md5
 
@@ -32,7 +32,7 @@ def login():
         abort(401)
     token = random.SystemRandom().random()
     access_token={
-                "access_token": "abcd",
+                "access_token": str(token),
                 }
     user_id = convert_username_to_id(username)
     insert_token(user_id, access_token['access_token'])
@@ -50,10 +50,63 @@ def logout():
             id = x[0]
     g.db.execute('DELETE FROM auth WHERE id=%s' % id)
     g.db.commit()
-    #check
     return '', 204
 
+@app.route('/profile/<name>')
+def get_profile(name):
+    user = find_user(name)
+    if not user:
+        abort(404)
+    user_id = user['user_id']
+    tweets = get_user_tweets(user_id)
+    user['tweets'] = tweets
+    result = json.dumps(user, encoding="ascii")
+    return Response(result, content_type='application/json')
+
+@app.route('/profile', methods=["POST"])
+def profile():
+    if not request.json or not 'first_name' in request.json or not 'last_name' in request.json:
+        abort(400)
+    token = request.json.get('access_token', '')
+    user_id = valid_token(token)
+    if not 'access_token' in request.json or not user_id:
+        abort(401)
+    first_name = request.json.get('first_name', '')
+    last_name = request.json.get('last_name', '')
+    birth_date = request.json.get('birth_date', '')
+    g.db.execute('UPDATE user SET first_name={first_name}, last_name={last_name}, birth_date={birth_date} WHERE id={user_id}'.\
+                     format(first_name=first_name, last_name=last_name, birth_date=birth_date, user_id=user_id))
+    g.db.commit()
+    return '', 201
+
 #helper functions
+def valid_token(token):
+    curs = g.db.execute('SELECT * FROM auth')
+    data = curs.fetchall()
+    for x in data:
+        if token in x:
+            return x[1]
+    return False
+
+def find_user(name):
+    cur = g.db.execute('SELECT id, username, first_name, last_name, birth_date FROM user')
+    data = cur.fetchall()
+    for x in data:
+        if name in x:
+
+            return dict(user_id=x[0], username=x[1], first_name=x[2], last_name=x[3], birth_date=x[4])
+
+
+
+def get_user_tweets(user_id):
+    cur = g.db.execute('SELECT * FROM tweet WHERE user_id=%s' % user_id)
+    data = cur.fetchall()
+    arr = []
+    for x in data:
+        a_dict = dict(id=x[0], text=x[3], date=x[2], uri='/tweet/'+str(x[0]))
+        arr.append(a_dict)
+    return arr
+
 def username_password(username, password):
     curs = g.db.execute('SELECT * FROM user')
     data = curs.fetchall()

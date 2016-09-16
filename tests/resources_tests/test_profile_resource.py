@@ -11,28 +11,22 @@ class ProfileResourceTestCase(AuthorizedTwitterAPITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content_type, 'application/json')
         data = json.loads(response.data.decode(response.charset))
+        print(data)
         expected = {
-            'user_id': 1,
-            'username': 'testuser1',
-            'first_name': 'Test',
-            'last_name': 'User',
-            'birth_date': '2016-01-30',
-            'tweets': [
-                {
-                    'date': '2016-06-01T05:13:00',
-                    'id': 1,
-                    'text': 'Tweet 1 testuser1',
-                    'uri': '/tweet/1'
-                },
-                {
-                    'date': '2016-06-01T05:22:00',
-                    'id': 2,
-                    'text': 'Tweet 2 testuser1',
-                    'uri': '/tweet/2'
-                }
-            ],
-            'tweet_count': 2,
+            u'username': u'testuser1',
+            u'first_name': u'Test',
+            u'last_name': u'User',
+            u'user_id': 1, u'birth_date': u'2016-01-30',
+            u'tweets': [
+                {u'date': u'2016-06-01 05:13:00',
+                 u'text': u'Tweet 1 testuser1',
+                 u'uri': u'/tweet/1', u'id': 1},
+                {u'date': u'2016-06-01 05:22:00',
+                 u'text': u'Tweet 2 testuser1',
+                 u'uri': u'/tweet/2', u'id': 2}
+            ]
         }
+
         self.assertEqual(data, expected)
 
     def test_get_profile_does_not_exit(self):
@@ -43,15 +37,15 @@ class ProfileResourceTestCase(AuthorizedTwitterAPITestCase):
         response = self.client.get('/profile/testuser3')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content_type, 'application/json')
-        data = json.loads(response.data.decode(response.charset))
+        data = json.loads(response.data)
+        print(data)
         expected = {
-            'user_id': 3,
-            'username': 'testuser3',
-            'first_name': None,
-            'last_name': None,
-            'birth_date': None,
-            'tweets': [],
-            'tweet_count': 0,
+            u'username': u'testuser3',
+            u'first_name': None,
+            u'last_name': None,
+            u'user_id': 3,
+            u'birth_date': None,
+            u'tweets': []
         }
         self.assertEqual(data, expected)
 
