@@ -33,7 +33,7 @@ class TweetResource(AuthorizedTwitterAPITestCase):
                                     content_type='application/xml')
         self.assertEqual(response.status_code, 400)
 
-    def test_post_tweet_successfully(self):
+    def test_post_tweet_successfully(self):#####
         # Preconditions
         cursor = self.db.execute("select * from tweet where user_id = 1;")
         self.assertEqual(len(cursor.fetchall()), 2)

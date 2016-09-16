@@ -83,13 +83,25 @@ def get_tweet(id):
     valid_tweet = valid_tweet_id(id)
     if not valid_tweet:
         abort(404)
-    print (valid_tweet)
     username = get_username_from_id(valid_tweet[1])######
-    print(username)
     a_dict = dict(id=valid_tweet[0], content=valid_tweet[3], date=valid_tweet[2], profile='/profile/'+username, uri='/tweet/'+str(id))
-    print(a_dict)
     result = json.dumps(a_dict)
     return Response(result, content_type='application/json')
+
+@app.route('/tweet', methods=['POST'])
+def post_tweet():
+    if not request.json or not 'access_token' in request.json:
+        abort(401)
+    user_id = valid_token(request.json.get('access_token',''))
+    if not user_id:
+        abort(401)
+    content = request.json.get('content', '')
+    g.db.execute('INSERT INTO tweet (user_id, content) VALUES (%s, "%s")' % (user_id, content))
+    g.db.commit()
+    return '', 201
+
+
+
 
 
 #helper functions
@@ -106,7 +118,6 @@ def valid_tweet_id(tweet_id):
     for x in data:
         print(x[0])
         if int(tweet_id) == x[0]:
-            print('ayto einai to tweet',x)
             return x
 
 
