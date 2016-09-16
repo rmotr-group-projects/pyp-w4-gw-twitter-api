@@ -74,8 +74,7 @@ def profile():
     first_name = request.json.get('first_name', '')
     last_name = request.json.get('last_name', '')
     birth_date = request.json.get('birth_date', '')
-    g.db.execute('UPDATE user SET first_name={first_name}, last_name={last_name}, birth_date={birth_date} WHERE id={user_id}'.\
-                     format(first_name=first_name, last_name=last_name, birth_date=birth_date, user_id=user_id))
+    g.db.execute('UPDATE user SET first_name="%s", last_name="%s", birth_date="%s" WHERE id=%s' % (first_name, last_name, birth_date, user_id))
     g.db.commit()
     return '', 201
 
