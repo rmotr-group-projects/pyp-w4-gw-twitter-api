@@ -65,7 +65,24 @@ def logout():
     
 app.route('/profile')
 def update_profile():
-    pass
+    profile_query = '''SELECT user_id FROM auth
+            WHERE access_token = '{}'
+    '''
+
+    cur = g.db.execute(profile_query.format(request.json['access_token']))
+    
+    profile_data = cur.fetchall()
+    
+    update_query = '''UPDATE user SET
+    first_name = '{0}'
+    last_name = '{1}'
+    birth_date = '{2}'
+    WHERE id = {3}
+    '''
+    update_query = update_query.format(request.json['first_name'], request.json['last_name'], request.json['birth_date'], profile_data[0][0])
+    
+    g.db.execute(update_query)
+    g.db.commit()
 
 app.route('/profile/<username>', methods = ['GET'])
 def get_profile(username):
