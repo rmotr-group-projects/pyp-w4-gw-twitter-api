@@ -60,7 +60,7 @@ def get_profile(name):
     user_id = user['user_id']
     tweets = get_user_tweets(user_id)
     user['tweets'] = tweets
-    result = json.dumps(user, encoding="ascii")
+    result = json.dumps(user)
     return Response(result, content_type='application/json')
 
 @app.route('/profile', methods=["POST"])
