@@ -78,7 +78,31 @@ def profile():
     g.db.commit()
     return '', 201
 
+@app.route('/tweet/<id>')
+def get_tweet(id):
+    valid_tweet = valid_tweet_id(id)
+    if not valid_tweet:
+        abort(404)
+    username = get_username_from_id(valid_tweet[1])######
+    a_dict = dict(id=valid_tweet[0], content=valid_tweet[3], date=valid_tweet[2], profile='/profile/'+username, uri='/tweet/'+str(id))
+    result = json.dumps(a_dict)
+    return result, 200
+
+
 #helper functions
+def get_username_from_id(user_id):
+    cur = g.db.execute('SELECT username FROM user WHERE id=%s' % user_id)
+    name = cur.fetchone()[0]
+    return name
+
+def valid_tweet_id(tweet_id):
+    cur = g.db.execute('SELECT * FROM tweet')
+    data = cur.fetchall()
+    for x in data:
+        if tweet_id in data:
+            return x
+
+
 def valid_token(token):
     curs = g.db.execute('SELECT * FROM auth')
     data = curs.fetchall()
