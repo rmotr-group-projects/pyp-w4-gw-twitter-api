@@ -136,7 +136,7 @@ class TweetResource(AuthorizedTwitterAPITestCase):
         cursor = self.db.execute("select * from tweet where user_id = 1;")
         self.assertEqual(len(cursor.fetchall()), 2)
 
-    def test_delete_tweet_invalid_token(self):
+    def test_delete_tweet_invalid_token(self):#ok
         # Preconditions
         cursor = self.db.execute("select * from tweet where user_id = 1;")
         self.assertEqual(len(cursor.fetchall()), 2)
@@ -155,7 +155,7 @@ class TweetResource(AuthorizedTwitterAPITestCase):
         cursor = self.db.execute("select * from tweet where user_id = 1;")
         self.assertEqual(len(cursor.fetchall()), 2)
 
-    def test_delete_tweet_doesnt_exist(self):
+    def test_delete_tweet_doesnt_exist(self):#ok
         # Preconditions
         cursor = self.db.execute("select * from tweet where user_id = 1;")
         self.assertEqual(len(cursor.fetchall()), 2)

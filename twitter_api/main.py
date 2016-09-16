@@ -78,8 +78,19 @@ def profile():
     g.db.commit()
     return '', 201
 
-@app.route('/tweet/<id>')
+@app.route('/tweet/<id>', methods=['GET', 'DELETE'])
 def get_tweet(id):
+    if request.method =='DELETE':
+        if not valid_token(request.json.get('access_token', '')):
+            abort(401)
+        valid_tweet = valid_tweet_id(id)
+        if not valid_tweet:
+            abort(404)
+        if not valid_token(request.json.get('access_token', '')) == valid_tweet[1]:
+            abort(401)
+        g.db.execute('DELETE FROM tweet WHERE id=%s' % id)
+        g.db.commit()
+        return '', 204
     valid_tweet = valid_tweet_id(id)
     if not valid_tweet:
         abort(404)
@@ -111,17 +122,18 @@ def get_username_from_id(user_id):
     return name
 
 def valid_tweet_id(tweet_id):
+    '''returns a whole tweet'''
     print (type(tweet_id))
     cur = g.db.execute('SELECT * FROM tweet')
     data = cur.fetchall()
     print(data)
     for x in data:
-        print(x[0])
         if int(tweet_id) == x[0]:
             return x
 
 
 def valid_token(token):
+    '''if valid returns user ID'''
     curs = g.db.execute('SELECT * FROM auth')
     data = curs.fetchall()
     for x in data:
