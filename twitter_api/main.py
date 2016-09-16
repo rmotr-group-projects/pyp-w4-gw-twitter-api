@@ -61,7 +61,7 @@ def get_profile(name):
     tweets = get_user_tweets(user_id)
     user['tweets'] = tweets
     result = json.dumps(user)
-    return Response(result, content_type='application/json')
+    return Response(str(result), content_type='application/json')
 
 @app.route('/profile', methods=["POST"])
 def profile():

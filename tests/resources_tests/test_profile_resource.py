@@ -38,7 +38,6 @@ class ProfileResourceTestCase(AuthorizedTwitterAPITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content_type, 'application/json')
         data = json.loads(response.data)
-        print(data)
         expected = {
             u'username': u'testuser3',
             u'first_name': None,
