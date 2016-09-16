@@ -90,10 +90,10 @@ def get_tweet(id):
 
 @app.route('/tweet', methods=['POST'])
 def post_tweet():
-    if not request.json or not 'access_token' in request.json:
-        abort(401)
+    if not request.json:
+        abort(400)
     user_id = valid_token(request.json.get('access_token',''))
-    if not user_id:
+    if not user_id or not 'access_token' in request.json:
         abort(401)
     content = request.json.get('content', '')
     g.db.execute('INSERT INTO tweet (user_id, content) VALUES (%s, "%s")' % (user_id, content))
