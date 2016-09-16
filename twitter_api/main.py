@@ -83,10 +83,13 @@ def get_tweet(id):
     valid_tweet = valid_tweet_id(id)
     if not valid_tweet:
         abort(404)
+    print (valid_tweet)
     username = get_username_from_id(valid_tweet[1])######
+    print(username)
     a_dict = dict(id=valid_tweet[0], content=valid_tweet[3], date=valid_tweet[2], profile='/profile/'+username, uri='/tweet/'+str(id))
+    print(a_dict)
     result = json.dumps(a_dict)
-    return result, 200
+    return Response(result, content_type='application/json')
 
 
 #helper functions
@@ -96,10 +99,14 @@ def get_username_from_id(user_id):
     return name
 
 def valid_tweet_id(tweet_id):
+    print (type(tweet_id))
     cur = g.db.execute('SELECT * FROM tweet')
     data = cur.fetchall()
+    print(data)
     for x in data:
-        if tweet_id in data:
+        print(x[0])
+        if int(tweet_id) == x[0]:
+            print('ayto einai to tweet',x)
             return x
 
 
