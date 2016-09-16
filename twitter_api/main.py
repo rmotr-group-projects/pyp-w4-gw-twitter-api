@@ -32,7 +32,7 @@ def login():
         abort(401)
     token = random.SystemRandom().random()
     access_token={
-                "access_token": str(token),
+                "access_token": "abcd",
                 }
     user_id = convert_username_to_id(username)
     insert_token(user_id, access_token['access_token'])
