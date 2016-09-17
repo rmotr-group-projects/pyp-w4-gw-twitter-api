@@ -2,7 +2,7 @@ import sqlite3
 from datetime import datetime
 from flask import Flask
 from flask import (g, request, jsonify)
-from utils import *
+from .utils import *
 import json
 import time
 
