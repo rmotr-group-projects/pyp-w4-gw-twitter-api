@@ -5,10 +5,10 @@ from flask import (g, request)
 JSON_MIME_TYPE = 'application/json'
 
 def md5(token):
-    """
+    '''
     Returns an md5 hash of a token passed as a string, performing an internal 
     conversion of the token to bytes if run in Python 3
-    """
+    '''
     return hashlib.md5(token.encode('utf-8'))
     
 
@@ -34,17 +34,3 @@ def json_only(f):
             return '', 400
         return f(*args, **kwargs)
     return decorated_function
-
-'''
-    if request.mimetype != JSON_MIME_TYPE:
-        return '', 400
-    if not request.json:
-        return '', 401
-        
-        
-    post = request.json
-    user_present = """SELECT access_token FROM auth WHERE access_token=?"""
-    result = g.db.execute(user_present, (post['access_token'],)).fetchone()
-    if not result:
-        return '', 401
-'''

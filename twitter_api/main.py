@@ -4,6 +4,7 @@ from flask import Flask
 from flask import (g, request, jsonify)
 from utils import *
 import json
+import time
 
 app = Flask(__name__)
 
@@ -72,7 +73,7 @@ def logout():
     post = request.json
     user_logout = """DELETE FROM auth WHERE access_token=?"""
     g.db.execute(user_logout, (post['access_token'],))
-    
+    g.db.commit()
     return  '', 204
 
 @app.route('/profile/<username>')
@@ -107,8 +108,22 @@ def profile_view(username):
 
 
 @app.route('/profile', methods=['POST'])
+@json_only
+@auth_only
 def profile_update():
-    return "Doing a POST Request", 200
+    post = request.json
+    user_sql = 'SELECT user_id FROM auth WHERE access_token=?'
+    user_id = g.db.execute(user_sql, (post['access_token'],)).fetchone()
+    if len(post.keys()) != 4:
+        return '', 400
+    user_sql = '''UPDATE user 
+                SET first_name=?,
+                    last_name=?,
+                    birth_date=?
+                    WHERE id=?'''
+    g.db.execute(user_sql, (post['first_name'], post['last_name'], post['birth_date'], user_id[0]))
+    g.db.commit()
+    return "Doing a POST Request", 201
     
 
 @app.route('/tweet/<int:tweet_id>')
