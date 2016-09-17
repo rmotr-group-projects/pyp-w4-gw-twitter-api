@@ -1,7 +1,7 @@
 import sqlite3
 from datetime import datetime
 from flask import Flask
-from flask import (g, request, jsonify, make_response)
+from flask import (g, request, jsonify)
 from .utils import *
 import json
 import time
@@ -104,7 +104,7 @@ def profile_view(username):
     tweet_list = _tweet_dict(user_info['user_id'])
     user_info['tweets'] = tweet_list
     user_info['tweet_count'] = len(tweet_list)
-    return make_response(jsonify(user_info), 200)
+    return jsonify(**user_info), 200
 
 
 @app.route('/profile', methods=['POST'])
