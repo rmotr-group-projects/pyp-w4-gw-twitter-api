@@ -17,7 +17,7 @@ class ProfileResourceTestCase(AuthorizedTwitterAPITestCase):
             'first_name': 'Test',
             'last_name': 'User',
             'birth_date': '2016-01-30',
-            'tweet': [
+            'tweets': [
                 {
                     'date': '2016-06-01T05:13:00',
                     'id': 1,
@@ -50,7 +50,7 @@ class ProfileResourceTestCase(AuthorizedTwitterAPITestCase):
             'first_name': None,
             'last_name': None,
             'birth_date': None,
-            'tweet': [],
+            'tweets': [],
             'tweet_count': 0,
         }
         self.assertEqual(data, expected)
