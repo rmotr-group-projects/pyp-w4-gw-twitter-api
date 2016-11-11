@@ -36,5 +36,5 @@ def json_only(f):
     return decorated_function
 
 def make_uid():
-    uid = uuid.UUID
+    uid = uuid.uuid4()
     return str(uid)
