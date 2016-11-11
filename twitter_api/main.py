@@ -4,7 +4,7 @@ from flask import Flask
 from flask import g, abort, request, jsonify
 import json
 from werkzeug.wrappers import Response
-from utils import *
+from .utils import *
 from datetime import *
 
 app = Flask(__name__)
