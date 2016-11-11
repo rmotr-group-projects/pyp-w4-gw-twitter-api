@@ -84,7 +84,7 @@ def post_tweet():
     return '', 201
 
 
-@app.route('/tweet/<int:t_id>')
+@app.route('/tweet/<int:t_id>', methods=['GET'])
 def tweet(t_id):
     tweet = query_db('SELECT t.content, t.created, u.username FROM tweet t INNER JOIN user u ON t.user_id = u.id WHERE t.id = ?', [t_id], one=True)
 
@@ -100,9 +100,20 @@ def tweet(t_id):
 @app.route('/tweet/<int:t_id>', methods=['DELETE'])
 @json_only
 @auth_only
+def delete_tweet(t_id):
+    data = request.get_json()
+    query = query_db('SELECT user_id FROM auth WHERE access_token = ?', [data['access_token']], one=True)
+    user_id = query['user_id']
+    query = query_db('SELECT user_id FROM tweet WHERE id = ?', [t_id], one=True)
+    if query is None:
+        abort(404)
+    if user_id != query['user_id']:
+        abort(401)
 
-
-
+    query_db('DELETE FROM tweet WHERE id = ?', [t_id])
+    g.db.commit()
+    return '', 204
+    
 @app.route('/profile/<username>')
 def profile(username):
     pass
