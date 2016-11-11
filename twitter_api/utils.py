@@ -52,3 +52,9 @@ def json_only(f):
             abort(400)
         return f(*args, **kwargs)
     return decorated_function
+
+def get_user_id(request):
+    data = request.get_json()
+    query = query_db('SELECT user_id FROM auth WHERE access_token = ?', [data['access_token']], one=True)
+    return query['user_id']
+    
