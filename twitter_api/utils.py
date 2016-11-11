@@ -1,25 +1,38 @@
+import hashlib
+import uuid
 from functools import wraps
+
+from flask import abort, request
 
 JSON_MIME_TYPE = 'application/json'
 
+
 def md5(token):
-    """
-    Returns an md5 hash of a token passed as a string, performing an internal 
-    conversion of the token to bytes if run in Python 3
-    """
-    pass
+    if type(token) != bytes:
+        token = token.encode('utf-8')
+    return hashlib.md5(token)
+
 
 def auth_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # implement your logic here
+        if request.get_json() and "access_token" not in request.get_json():
+            abort(401)
         return f(*args, **kwargs)
+
     return decorated_function
 
 
 def json_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # implement your logic here
+        if not request.is_json:
+            abort(400)
         return f(*args, **kwargs)
+
     return decorated_function
+
+
+def create_token():
+    token = str(uuid.uuid1())[9:]
+    return token
