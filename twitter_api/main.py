@@ -1,7 +1,7 @@
 import sqlite3
 
 from flask import Flask, g, jsonify, abort, request
-import utils
+from . import utils
 from datetime import datetime
 
 app = Flask(__name__)
