@@ -139,14 +139,44 @@ def profile():
             user_id[0]])
         g.db.commit()
         
-        x = g.db.execute('SELECT * FROM user WHERE id = ?', [user_id[0]])
-        print(x)
-        x = x.fetchone()
-        print(x)
-        
     return 'Profile updated successfully', 201
     
+@app.route('/tweet/<int:id>', methods=['GET','DELETE'])
+def tweet_single(id):
+    if request.method == 'GET':
+        if not id:
+            abort(401)
+        # tweet = 
+        # # response = make_response(tweet, 204)
+        # response = make_response(json.dumps(tweet.text), 200)
+        tweet = get_tweet(id)
+        if not tweet:
+            abort(404)
+        return tweet, 200
+        
+        
+    if request.method == 'DELETE':
+        if not authorized(request):
+            abort(401)
+        
+        tweet = g.db.execute('SELECT user_id FROM tweet WHERE id == ?', [id])
+        tweet = tweet.fetchone()
+       
+        if not tweet:
+            abort(404)
+        
+        if tweet[0] != token_to_id(request)[0]:
+            print(tweet[0], token_to_id(request))
+            abort(401)
+            
+        g.db.execute('DELETE FROM tweet WHERE id == ?', [id])
+        g.db.commit()
+        
+        return 'Tweet deleted.', 204
 
+@app.route('/tweet', methods=['POST'])
+def tweet():
+    return 'Tweeted'
 
 # errors handlers
 
@@ -161,7 +191,21 @@ def not_found(e):
 
 # https://twitter-api-vkotek.c9users.io/
 
+def get_tweet(tweet_id):
+    
+    tweet = g.db.execute('SELECT tweet.id, tweet.content, tweet.created, user.username FROM tweet LEFT JOIN user ON tweet.user_id == user.id WHERE tweet.id == ?', [tweet_id])
+    tweet = tweet.fetchone()
+    if tweet == None:
+        return None
 
+    response = jsonify(
+        date = datetime.strptime(tweet[2], '%Y-%m-%d %H:%M:%S').isoformat(),
+        id = tweet[0],
+        text = tweet[0],
+        profile = '/profile/{}'.format(tweet[3]),
+        uri = '/tweet/{}'.format(tweet[0]),
+        )
+    return response
 
 def get_tweets(user_id):
     
@@ -174,3 +218,33 @@ def get_tweets(user_id):
         'uri': '/tweet/{}'.format(tweet[0]) } for tweet in tweets.fetchall()]
 
     return response
+    
+def authorized(request):
+    data = request.get_json()
+    # Request is missing access token
+    if 'access_token' not in data:
+        abort(401)
+    
+    user_id = g.db.execute('SELECT user_id FROM auth WHERE access_token == ?',
+        [data['access_token']])
+    try:
+        return user_id.fetchone()
+    except:
+        return None
+        
+def token_to_id(request):
+    data = request.get_json()
+    
+    # Request is missing access token
+    if 'access_token' not in data:
+        abort(401)
+    
+    user_id = g.db.execute('SELECT user_id FROM auth WHERE access_token == ?',
+        [data['access_token']])
+    user_id = user_id.fetchone()
+    
+    # Access token invalid (not found in DB)
+    if not user_id:
+        abort(401)
+    
+    return user_id
