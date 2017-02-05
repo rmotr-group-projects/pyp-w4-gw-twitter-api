@@ -201,7 +201,7 @@ def get_tweet(tweet_id):
     response = jsonify(
         date = datetime.strptime(tweet[2], '%Y-%m-%d %H:%M:%S').isoformat(),
         id = tweet[0],
-        text = tweet[0],
+        content = tweet[1],
         profile = '/profile/{}'.format(tweet[3]),
         uri = '/tweet/{}'.format(tweet[0]),
         )
