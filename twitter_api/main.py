@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sqlite3
 
 from flask import Flask
@@ -5,7 +6,6 @@ from flask import g, request, abort, jsonify, make_response
 from . utils import md5
 import binascii, os, json
 from datetime import datetime
-# from functools import update_wrapper
 
 app = Flask(__name__)
 
@@ -13,12 +13,9 @@ def connect_db(db_name):
     db = sqlite3.connect(db_name)
     return db
     
-
 @app.before_request
 def before_request():
     g.db = connect_db(app.config['DATABASE'])
-
-# http://pyp-w4-gw-twitter-api.vkotek.c9users.io/
 
 # views
 @app.route('/login', methods=['POST'])
@@ -41,28 +38,21 @@ def login():
 
     if not user:
         abort(404)
-    
-    if user[2] != md5(data['password']).hexdigest():
-        print('Incorrect pass.')
+
+    password = md5(data['password']).hexdigest()
+        
+    if user[2] != password:
         abort(401)
-    print('{} matches.'.format(data['password']))
     
-    token = binascii.hexlify(os.urandom(16))
+    token = binascii.hexlify(os.urandom(16)).decode('utf-8')
     
     response = make_response(jsonify(access_token=token), 201)
-    
-    # auth_exists = g.db.execute('SELECT user_id FROM auth WHERE user_id == ?', [user[0]])
-    # if auth_exists:
-    #     abort(401)
     
     g.db.execute('INSERT INTO auth ("user_id","access_token") VALUES (?, ?)',
     [user[0], token])
     g.db.commit()
-    print("Created auth '{}' for user [{}] {}".format(token, user[0], user[1]))
+    
     return response
-
-# PYTHONPATH=. py.test tests/resources_tests/test_login.py::LoginResourceTestCase::test_login_successful
-# PYTHONPATH=. py.test tests/resources_tests/test_profile_resource.py::ProfileResourceTestCase::test_post_profile_content_not_json
 
 @app.route('/logout', methods=['POST'])
 def logout():
@@ -146,9 +136,7 @@ def tweet_single(id):
     if request.method == 'GET':
         if not id:
             abort(401)
-        # tweet = 
-        # # response = make_response(tweet, 204)
-        # response = make_response(json.dumps(tweet.text), 200)
+        
         tweet = get_tweet(id)
         if not tweet:
             abort(404)
@@ -165,8 +153,7 @@ def tweet_single(id):
         if not tweet:
             abort(404)
         
-        if tweet[0] != token_to_id(request)[0]:
-            print(tweet[0], token_to_id(request))
+        if tweet[0] != token_to_id(request):
             abort(401)
             
         g.db.execute('DELETE FROM tweet WHERE id == ?', [id])
@@ -175,8 +162,25 @@ def tweet_single(id):
         return 'Tweet deleted.', 204
 
 @app.route('/tweet', methods=['POST'])
-def tweet():
-    return 'Tweeted'
+def tweet_post():
+    
+    if request.method == 'POST':
+        data = request.get_json()
+        
+        if request.headers['Content-Type'] != 'application/json':
+            abort(400)
+            
+        if not authorized(request):
+            abort(401)
+        
+        g.db.execute('INSERT INTO "tweet" ("user_id", "content")\
+        VALUES (?, ?)',[
+            token_to_id(request),
+            data['content']
+        ])
+        g.db.commit()
+
+        return 'Tweet posted.', 201
 
 # errors handlers
 
@@ -247,4 +251,4 @@ def token_to_id(request):
     if not user_id:
         abort(401)
     
-    return user_id
+    return user_id[0]
