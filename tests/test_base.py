@@ -7,7 +7,7 @@ import tempfile
 from twitter_api import settings
 from twitter_api import app
 from twitter_api.main import connect_db
-from twitter_api.utils import md5
+from hashlib import md5
 
 
 class BaseTwitterAPITestCase(unittest.TestCase):
@@ -38,9 +38,9 @@ class BaseTwitterAPITestCase(unittest.TestCase):
         for statement in sql_query.split(';'):
             self.db.execute(statement)
 
-        self.db.execute('INSERT INTO "user" ("id", "username", "password", "first_name", "last_name", "birth_date") VALUES (1, "testuser1", "{}", "Test", "User", "2016-01-30");'.format(md5('user1-pass').hexdigest()))
-        self.db.execute('INSERT INTO "user" ("id", "username", "password") VALUES (2, "testuser2", "{}");'.format(md5('1234').hexdigest()))
-        self.db.execute('INSERT INTO "user" ("id", "username", "password") VALUES (3, "testuser3", "{}");'.format(md5('1234').hexdigest()))
+        self.db.execute('INSERT INTO "user" ("id", "username", "password", "first_name", "last_name", "birth_date") VALUES (1, "testuser1", "{}", "Test", "User", "2016-01-30");'.format(md5('user1-pass'.encode('utf-8')).hexdigest()))
+        self.db.execute('INSERT INTO "user" ("id", "username", "password") VALUES (2, "testuser2", "{}");'.format(md5('1234'.encode('utf-8')).hexdigest()))
+        self.db.execute('INSERT INTO "user" ("id", "username", "password") VALUES (3, "testuser3", "{}");'.format(md5('1234'.encode('utf-8')).hexdigest()))
 
         self.db.execute('INSERT INTO "tweet" ("id", "user_id", "content", "created") VALUES (1, 1, "Tweet 1 testuser1", "2016-06-01 05:13:00");')
         self.db.execute('INSERT INTO "tweet" ("id", "user_id", "content", "created") VALUES (2, 1, "Tweet 2 testuser1", "2016-06-01 05:22:00");')

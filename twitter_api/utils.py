@@ -1,4 +1,5 @@
 from functools import wraps
+from flask import abort, request, g
 
 JSON_MIME_TYPE = 'application/json'
 
@@ -9,17 +10,26 @@ def md5(token):
     """
     pass
 
-def auth_only(f):
+def auth_only(f):  # jon
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # implement your logic here
+        userdata = request.get_json()
+        try:
+            token = userdata['access_token']
+        except KeyError:
+            abort(401)
+        lookup = g.db.execute('SELECT 1 FROM auth WHERE access_token = ?', (token,))
+        if not lookup.fetchone():
+            abort(401)
         return f(*args, **kwargs)
     return decorated_function
 
 
-def json_only(f):
+def json_only(f): # jon
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # implement your logic here
+        if request.get_json() is None:
+            abort(400)
         return f(*args, **kwargs)
     return decorated_function
+
