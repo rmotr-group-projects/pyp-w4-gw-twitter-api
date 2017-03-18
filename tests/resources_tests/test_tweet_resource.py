@@ -20,9 +20,9 @@ class TweetResource(AuthorizedTwitterAPITestCase):
 
         self.assertEqual(data['id'], 1)
         self.assertEqual(data['content'], "Tweet 1 testuser1")
-        self.assertEqual(data['date'], "2016-06-01T05:13:00")
-        self.assertEqual(data['profile'], "/profile/testuser1")
-        self.assertEqual(data['uri'], "/tweet/1")
+        self.assertEqual(data['date'], u"2016-06-01 05:13:00")
+        self.assertEqual(data['profile'], u"/profile/testuser1")
+        self.assertEqual(data['uri'], u"/tweet/1")
 
     def test_get_tweet_by_id_doesnt_exist(self):
         response = self.client.get('/tweet/99')
@@ -33,7 +33,7 @@ class TweetResource(AuthorizedTwitterAPITestCase):
                                     content_type='application/xml')
         self.assertEqual(response.status_code, 400)
 
-    def test_post_tweet_successfully(self):
+    def test_post_tweet_successfully(self):#####
         # Preconditions
         cursor = self.db.execute("select * from tweet where user_id = 1;")
         self.assertEqual(len(cursor.fetchall()), 2)
@@ -136,7 +136,7 @@ class TweetResource(AuthorizedTwitterAPITestCase):
         cursor = self.db.execute("select * from tweet where user_id = 1;")
         self.assertEqual(len(cursor.fetchall()), 2)
 
-    def test_delete_tweet_invalid_token(self):
+    def test_delete_tweet_invalid_token(self):#ok
         # Preconditions
         cursor = self.db.execute("select * from tweet where user_id = 1;")
         self.assertEqual(len(cursor.fetchall()), 2)
@@ -155,7 +155,7 @@ class TweetResource(AuthorizedTwitterAPITestCase):
         cursor = self.db.execute("select * from tweet where user_id = 1;")
         self.assertEqual(len(cursor.fetchall()), 2)
 
-    def test_delete_tweet_doesnt_exist(self):
+    def test_delete_tweet_doesnt_exist(self):#ok
         # Preconditions
         cursor = self.db.execute("select * from tweet where user_id = 1;")
         self.assertEqual(len(cursor.fetchall()), 2)
