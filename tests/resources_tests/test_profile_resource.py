@@ -31,7 +31,7 @@ class ProfileResourceTestCase(AuthorizedTwitterAPITestCase):
                     'uri': '/tweet/2'
                 }
             ],
-            'tweet_count': 2,
+            'tweet_count': 2
         }
         self.assertEqual(data, expected)
 
