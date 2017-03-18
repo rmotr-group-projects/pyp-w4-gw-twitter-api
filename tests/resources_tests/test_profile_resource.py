@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
-
 from ..test_base import AuthorizedTwitterAPITestCase
-
+import pdb
 
 class ProfileResourceTestCase(AuthorizedTwitterAPITestCase):
 
@@ -11,6 +10,7 @@ class ProfileResourceTestCase(AuthorizedTwitterAPITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content_type, 'application/json')
         data = json.loads(response.data.decode(response.charset))
+
         expected = {
             'user_id': 1,
             'username': 'testuser1',
@@ -19,13 +19,13 @@ class ProfileResourceTestCase(AuthorizedTwitterAPITestCase):
             'birth_date': '2016-01-30',
             'tweets': [
                 {
-                    'date': '2016-06-01T05:13:00',
+                    'date': '2016-06-01 05:13:00',
                     'id': 1,
                     'text': 'Tweet 1 testuser1',
                     'uri': '/tweet/1'
                 },
                 {
-                    'date': '2016-06-01T05:22:00',
+                    'date': '2016-06-01 05:22:00',
                     'id': 2,
                     'text': 'Tweet 2 testuser1',
                     'uri': '/tweet/2'
