@@ -26,12 +26,12 @@ class LogoutTestCase(AuthorizedTwitterAPITestCase):
         # Preconditions
         cursor = self.db.execute("select * from auth where user_id = 1;")
         self.assertIsNotNone(cursor.fetchone())
-
         response = self.client.post(
             '/logout',
             data=json.dumps({}),  # missing access_token
             content_type='application/json')
-
+        #import pdb
+        #pdb.set_trace()
         self.assertEqual(response.status_code, 401)
 
         # Postconditions
