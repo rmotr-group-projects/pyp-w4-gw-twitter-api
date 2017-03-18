@@ -6,3 +6,4 @@ INSERT INTO "user" ("id", "username", "password", "birth_date") VALUES (2, "admi
 INSERT INTO "tweet" ("user_id", "content") VALUES (1, "Hello World!");
 INSERT INTO "tweet" ("user_id", "content") VALUES (1, "This is so awesome");
 INSERT INTO "tweet" ("user_id", "content") VALUES (2, "Testing twitter clone");
+INSERT INTO "tweet" ("user_id", "content") VALUES (2, "Testing still suck");
