@@ -1,4 +1,5 @@
 from functools import wraps
+import hashlib
 
 JSON_MIME_TYPE = 'application/json'
 
@@ -7,7 +8,13 @@ def md5(token):
     Returns an md5 hash of a token passed as a string, performing an internal 
     conversion of the token to bytes if run in Python 3
     """
-    pass
+    try:
+        # py2.x version
+        return hashlib.md5(token)
+    except TypeError:
+        # py3.x version
+        return hashlib.md5(token.encode('utf-8'))
+
 
 def auth_only(f):
     @wraps(f)

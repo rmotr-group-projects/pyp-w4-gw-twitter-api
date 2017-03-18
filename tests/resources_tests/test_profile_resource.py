@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+from flask import g
 
 from ..test_base import AuthorizedTwitterAPITestCase
 
