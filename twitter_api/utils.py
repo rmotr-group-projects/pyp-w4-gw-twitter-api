@@ -1,4 +1,6 @@
 from functools import wraps
+import hashlib
+
 
 JSON_MIME_TYPE = 'application/json'
 
@@ -7,7 +9,17 @@ def md5(token):
     Returns an md5 hash of a token passed as a string, performing an internal 
     conversion of the token to bytes if run in Python 3
     """
-    pass
+    return(hashlib.md5(token.encode('utf-8')))
+
+# def login_required(f):
+#     # get user_id and access token from auth;
+#     # if access_token exists
+#     # then you are logged in to user_id
+#     @wraps(f)
+#     def decorator(*args, **kwargs):
+#         authentication = g.db.execute("SELECT FROM auth access_token")
+#     g.db.commit()
+        
 
 def auth_only(f):
     @wraps(f)
