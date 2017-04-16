@@ -2,7 +2,7 @@ import sqlite3
 
 from flask import Flask
 from flask import g, request, abort, jsonify, make_response
-from utils import json_only, auth_only, md5
+from .utils import json_only, auth_only, md5
 from datetime import datetime
 import json
 
