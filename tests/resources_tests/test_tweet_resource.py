@@ -53,7 +53,7 @@ class TweetResource(AuthorizedTwitterAPITestCase):
         cursor = self.db.execute("select * from tweet where user_id = 1;")
         self.assertEqual(len(cursor.fetchall()), 3)
 
-    def test_post_tweet_witout_token(self):
+    def test_post_tweet_without_token(self):
         # Preconditions
         cursor = self.db.execute("select * from tweet where user_id = 1;")
         self.assertEqual(len(cursor.fetchall()), 2)
