@@ -2,7 +2,7 @@ import sqlite3
 
 from flask import Flask
 from flask import g, json, request, jsonify, abort
-from .utils import _md5, json_only, auth_only, convert_time
+from .utils import md5, json_only, auth_only, convert_time
 from random import getrandbits
 
 app = Flask(__name__)
@@ -24,7 +24,7 @@ def login():
     data = request.get_json()
     username = data['username']
     try:
-        password = _md5(data['password'])
+        password = md5(data['password']).hexdigest()
     except KeyError:
         abort(400)
     query = "SELECT id, username, password FROM user WHERE username=?;"

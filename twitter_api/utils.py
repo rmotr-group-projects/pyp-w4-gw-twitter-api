@@ -1,17 +1,21 @@
 from functools import wraps
-from hashlib import md5
+from hashlib import md5 as _md5
 from flask import request, g, abort
 from datetime import datetime as dt
 import json
+import sys
 
 JSON_MIME_TYPE = 'application/json'
 
-def _md5(token):
+def md5(token):
     """
     Returns an md5 hash of a token passed as a string, performing an internal 
     conversion of the token to bytes if run in Python 3
     """
-    return md5(token.encode('utf-8')).hexdigest()
+    new_token = token
+    if sys.version_info[0] == 3:
+        new_token = token.encode('utf-8')
+    return _md5(new_token)
 
 def auth_only(f):
     @wraps(f)
