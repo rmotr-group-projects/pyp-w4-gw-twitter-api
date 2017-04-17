@@ -1,5 +1,8 @@
 from functools import wraps
 from hashlib import md5
+from flask import request, g, abort
+from datetime import datetime as dt
+import json
 
 JSON_MIME_TYPE = 'application/json'
 
@@ -13,17 +16,26 @@ def _md5(token):
 def auth_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # is user
+        if 'access_token' not in request.json:
+            abort(401)
+        query = "SELECT a.user_id FROM auth a WHERE a.access_token=?;"
+        c = g.db.execute(query, (request.json['access_token'],))
+        user_id = c.fetchone()
+        if not user_id:
+            abort(401)
+        kwargs['user_id'] = user_id[0]
         return f(*args, **kwargs)
     return decorated_function
 
 
 def json_only(f):
     @wraps(f)
-    def decorated_function(*args, **kwargs):
-        try:
-            json.loads(args, kwargs)
-        except ValueError:
-            return 
+    def wrapper(*args, **kwargs):
+        if request.content_type != 'application/json':
+            abort(400)
         return f(*args, **kwargs)
-    return decorated_function
+    return wrapper
+
+
+def convert_time(d_t):
+    return (dt.strptime(d_t,"%Y-%m-%d %H:%M:%S").strftime('%Y-%m-%dT%H:%M:%S'))
