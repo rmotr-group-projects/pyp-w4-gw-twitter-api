@@ -31,8 +31,8 @@ def login():
         username = data['username']
         password = data['password']
         hashed_password = md5(password).hexdigest()
-    
-        cursor = g.db.execute("SELECT id, username, password from user WHERE username=(?)", (username,))
+        _SQL = "SELECT id, username, password from user WHERE username=(?)"
+        cursor = g.db.execute(_SQL, (username,))
         user = cursor.fetchone() 
         
         if not isinstance(user, tuple):
@@ -131,10 +131,98 @@ def get_profile(username):
         # return jsonify('x'), 200, {'Content-Type': JSON_MIME_TYPE}
     
             
-@app.route('/tweet', methods = ['GET', 'POST'])
-def tweet():# maybe has arg?
-    pass
+@app.route('/tweet/<int:tweet_id>')
+def get_tweet(tweet_id):
+    # GET /tweet/<TWEET-ID>
+    # >>>
+    # 200 Ok
+    # {
+    #   "id": <TWEET-ID>,
+    #   "content": "Tweet test",
+    #   "date": "2016-12-31T00:30:19",
+    #   "profile": "/profile/<USERNAME>",
+    #   "uri": "/tweet/<TWEET-ID>"
+    # }
+    
+    _SQL = "SELECT content, created, user_id FROM tweet WHERE id=(?);"
+    cursor = g.db.execute(_SQL, (tweet_id,))
+    tweet_data = cursor.fetchone()
+    
+    if tweet_data == None:
+        return "Tweet Doesn't Exist", 404
+    
+    _SQL = "SELECT username FROM user WHERE id=(?);" 
+    cursor = g.db.execute(_SQL, (tweet_data[2],))
+    user_data = cursor.fetchone()
+    
+    packet = {  "id": tweet_id,
+                "content": tweet_data[0],
+                "date": tweet_data[1].replace(' ', 'T'),
+                "profile": "/profile/{}".format(user_data[0]),
+                "uri": "/tweet/{}".format(tweet_id)
+            }
+    return jsonify(packet), 200
 
+
+@app.route('/tweet/<int:tweet_id>', methods=['DELETE'])
+def delete_tweet(tweet_id):
+    data = request.get_json()
+    
+    # check authentication
+    try:
+        if 'access_token' not in data:
+            return '', 401
+        _SQL = "SELECT user_id FROM auth WHERE access_token=(?);"
+        cursor = g.db.execute(_SQL, (data['access_token'],))
+        uid = cursor.fetchone()
+    except:
+        return '', 400
+        
+    if not uid:
+        # authentication token doesn't exist
+        return '', 401
+        # see if tweet ID has same user as auth
+    _SQL = "SELECT user_id FROM tweet WHERE id=(?);"
+    cursor = g.db.execute(_SQL, (tweet_id,))
+    tweet_user_id = cursor.fetchone()
+    if not tweet_user_id:
+        # tweet doesn't exist
+        return '', 404
+    if tweet_user_id[0] != uid[0]:
+        # user doesn't have authority to delete tweet
+        return '', 401
+    # then delete the tweet
+    _SQL = "DELETE FROM tweet WHERE id=(?);"
+    g.db.execute(_SQL, (tweet_id,))
+    g.db.commit()
+    return '', 204
+    
+
+@app.route('/tweet', methods=['POST'])
+def post_tweet():
+    data = request.get_json()
+    
+    # check authentication
+    try:
+        if 'access_token' not in data:
+            return '', 401
+        _SQL = "SELECT user_id FROM auth WHERE access_token=(?);"
+        cursor = g.db.execute(_SQL, (data['access_token'],))
+        uid = cursor.fetchone()
+    except:
+        return '', 400
+    
+    # post tweet   
+    if uid:
+        try:
+            content = data['content']
+        except:
+            return '', 400
+        _SQL = "INSERT INTO tweet (user_id, content) VALUES (?, ?);"
+        g.db.execute(_SQL, (uid[0], content))
+        g.db.commit()
+        return '', 201
+    return '', 401
 
 @app.errorhandler(404)
 def not_found(e):
