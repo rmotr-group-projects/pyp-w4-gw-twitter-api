@@ -3,7 +3,7 @@ import sqlite3
 from flask import Flask
 from flask import g, json, request, jsonify, abort
 from .utils import md5, json_only, auth_only, convert_time
-from random import getrandbits
+import uuid
 
 app = Flask(__name__)
 
@@ -33,7 +33,7 @@ def login():
     if user:
         if password != user[2]:
             abort(401)
-        token = str(getrandbits(32))
+        token = str(uuid.uuid4().hex)
         query = """
                 INSERT INTO auth ("user_id", "access_token") 
                 VALUES (?, ?);
