@@ -12,7 +12,9 @@ def md5(token):
     Returns an md5 hash of a token passed as a string, performing an internal 
     conversion of the token to bytes if run in Python 3
     """
-    return hashlib.md5(token.encode('utf-8'))
+    if not isinstance(token, bytes):
+        token = token.encode('utf-8')
+    return hashlib.md5(token)
 
 
 #taken from python docs
