@@ -3,7 +3,7 @@ import sqlite3
 from flask import Flask
 from flask import g, jsonify, abort, request, make_response
 import binascii, os, json
-import utils
+from twitter_api import utils
 from datetime import datetime
 
 
