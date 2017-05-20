@@ -2,7 +2,7 @@ import sqlite3
 import json
 import random
 import string
-from twitter_api.utils import md5
+from twitter_api.utils import md5, json_only, auth_only
 
 from flask import abort
 from flask import Flask
@@ -25,11 +25,9 @@ def random_string():
 
 # implement your views here
 @app.route('/login', methods=['POST'])
-def login():
+@json_only
+def login(data):
     # actually check that the user is in
-    # http://flask.pocoo.org/docs/0.12/api/#flask.Request.get_json
-    #data = json.loads(request.data)
-    data = request.get_json()
     user_name = data['username']
     cursor = g.db.cursor() # https://docs.python.org/3/library/sqlite3.html#sqlite3.Connection.execute
     cursor.execute('SELECT id, password FROM user WHERE username=?', (user_name,))
@@ -37,9 +35,8 @@ def login():
     
     
     if result is None:
-        # user_name wasn't found in the user db, so we should
-        # http://flask.pocoo.org/docs/0.12/api/#flask.abort
-        return abort(404) #no return
+
+        return abort(404)
     else:
         try:
             password_hash = md5(data['password']).hexdigest() 
@@ -56,8 +53,8 @@ def login():
     return json.dumps({'access_token': access_token}), 201
 
 @app.route('/logout', methods=['POST'])
-def logout():
-    data = request.get_json()
+@json_only
+def logout(data):
     try:
         access_token = data['access_token']
         g.db.execute('DELETE FROM auth WHERE access_token=?', [access_token])
@@ -89,11 +86,9 @@ def parse_tweet(tweet_row, tweet_field='text'):
     }
 
 @app.route('/profile', methods=['POST'])
-def post_profile():
+@json_only
+def post_profile(data):
         
-    data = request.get_json()
-    if data is None:
-        return abort(400)
     try:
         #validate that data is of a proper form
         access_token = data['access_token'] #checks if data['access_token'] exists by assignment
@@ -118,59 +113,58 @@ def post_profile():
     except KeyError:
         return abort(401)
 
-@app.route('/tweet/<tweet_num>', methods=['GET', 'DELETE'])
-def get_tweet(tweet_num):
-    if request.method == 'GET':
-        cursor = g.db.execute('SELECT * FROM tweet WHERE id=?', [tweet_num])
-        result = cursor.fetchone()
-        if result is None:
-            return abort(404)
-        else:
-            user_id = result[1]
-            cursor = g.db.execute('SELECT username FROM user WHERE id=?', [user_id])
-            user_name = cursor.fetchone()[0]
-            tweet_dict = parse_tweet(result, tweet_field='content')
-            tweet_dict['profile'] = "/profile/{}".format(user_name)
-            return json.dumps(tweet_dict), 200, {'Content-Type': 'application/json'}
-            
+
+@app.route('/tweet/<tweet_num>', methods=['DELETE'])
+@json_only
+def delete_tweet(tweet_num, data):
+    
+    cursor = g.db.execute('SELECT * FROM tweet WHERE id=?', [tweet_num])
+    result = cursor.fetchone()
+    if result is None:
+        return abort(404)
     else:
-        data = request.get_json()
-        if data is None:
-            return abort(400)
+        user_id = result[1]
+        cursor = g.db.execute('SELECT username FROM user WHERE id=?', [user_id])
+        user_name = cursor.fetchone()[0]
+        # does user_name's access_token match the access_token from the data
+        access_token = data['access_token'] #checks if data['access_token'] exists by assignment
         
-        cursor = g.db.execute('SELECT * FROM tweet WHERE id=?', [tweet_num])
-        result = cursor.fetchone()
-        if result is None:
-            return abort(404)
-        else:
-            user_id = result[1]
-            cursor = g.db.execute('SELECT username FROM user WHERE id=?', [user_id])
-            user_name = cursor.fetchone()[0]
-            # does user_name's access_token match the access_token from the data
-            access_token = data['access_token'] #checks if data['access_token'] exists by assignment
-            
-            #verify that access_token is registered to db
-            cursor = g.db.execute('SELECT id FROM auth WHERE access_token=?', [access_token]) #moves cursor to auth record matching access_token
-            account_result = cursor.fetchone()
-            if account_result is None:
-                return abort(401)
-            account_info = account_result[0]
-            
-            if account_info != user_id:
-                return abort(401)
-            # UPDATE table_name
-            # SET column1 = value1, column2 = value2...., columnN = valueN
-            # WHERE [condition];
-            g.db.execute('DELETE FROM tweet WHERE id=?', [tweet_num])
-            g.db.commit()
-            return '', 204
+        #verify that access_token is registered to db
+        cursor = g.db.execute('SELECT id FROM auth WHERE access_token=?', [access_token]) #moves cursor to auth record matching access_token
+        account_result = cursor.fetchone()
+        if account_result is None:
+            return abort(401)
+        account_info = account_result[0]
+        
+        if account_info != user_id:
+            return abort(401)
+        # UPDATE table_name
+        # SET column1 = value1, column2 = value2...., columnN = valueN
+        # WHERE [condition];
+        g.db.execute('DELETE FROM tweet WHERE id=?', [tweet_num])
+        g.db.commit()
+        return '', 204
+
+@app.route('/tweet/<tweet_num>', methods=['GET'])
+def get_tweet(tweet_num):
+    cursor = g.db.execute('SELECT * FROM tweet WHERE id=?', [tweet_num])
+    result = cursor.fetchone()
+    if result is None:
+        return abort(404)
+    else:
+        user_id = result[1]
+        cursor = g.db.execute('SELECT username FROM user WHERE id=?', [user_id])
+        user_name = cursor.fetchone()[0]
+        tweet_dict = parse_tweet(result, tweet_field='content')
+        tweet_dict['profile'] = "/profile/{}".format(user_name)
+        return json.dumps(tweet_dict), 200, {'Content-Type': 'application/json'}
+        
             
 
+
 @app.route('/tweet', methods=['POST'])
-def post_tweet():
-    data = request.get_json()
-    if data is None:
-        return abort(400)
+@json_only
+def post_tweet(data):
         
     try:
         #validate that data is of a proper form
