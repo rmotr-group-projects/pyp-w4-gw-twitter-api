@@ -33,7 +33,7 @@ def login(data):
     cursor.execute('SELECT id, password FROM user WHERE username=?', (user_name,))
     result = cursor.fetchone()
     
-    
+
     if result is None:
 
         return abort(404)
@@ -64,13 +64,7 @@ def logout(data):
         return abort(401)
 
 def parse_tweet(tweet_row, tweet_field='text'):
-    """
-    id INTEGER PRIMARY KEY autoincrement,
-    user_id INTEGER,
-    created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    content TEXT NOT NULL,
-    FOREIGN KEY(user_id) REFERENCES user(id)
-    """
+
     tweet_id, user_id, created, content = tweet_row
     uri_string = '/tweet/{}'.format(tweet_id)
     
@@ -86,27 +80,18 @@ def parse_tweet(tweet_row, tweet_field='text'):
     }
 
 @app.route('/profile', methods=['POST'])
-@json_only
-def post_profile(data):
+@auth_and_json_only
+def post_profile(data, authorized_user_id):
         
     try:
-        #validate that data is of a proper form
-        access_token = data['access_token'] #checks if data['access_token'] exists by assignment
-        if len(data) != 4:#check that all required fields are present
+            
+        if len(data) != 4:
             return abort(400)
-            
-        #verify that access_token is registered to db
-        cursor = g.db.execute('SELECT id FROM auth WHERE access_token=?', [access_token]) #moves cursor to auth record matching access_token
-        account_info = cursor.fetchone()
-        if not account_info:#if no matching auth record exists, abort
-            return abort(401)
-            
-   
         
         # UPDATE table_name
         # SET column1 = value1, column2 = value2...., columnN = valueN
         # WHERE [condition];
-        g.db.execute('UPDATE user SET first_name=?, last_name=?, birth_date=? WHERE id=?', [data['first_name'], data['last_name'], data['birth_date'], account_info[0]])
+        g.db.execute('UPDATE user SET first_name=?, last_name=?, birth_date=? WHERE id=?', [data['first_name'], data['last_name'], data['birth_date'], authorized_user_id])
         g.db.commit()
         
         return '', 201
