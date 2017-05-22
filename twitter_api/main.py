@@ -21,7 +21,7 @@ def before_request():
     g.db = connect_db(app.config['DATABASE'])
 
 def random_string():
-    return "".join(random.choice(string.letters + string.digits) for _ in range(20))
+    return "".join(random.choice(string.printable) for _ in range(20))
 
 # implement your views here
 @app.route('/login', methods=['POST'])
