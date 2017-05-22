@@ -13,20 +13,39 @@ app = Flask(__name__)
 
 
 def connect_db(db_name):
+    '''
+    Helper function that connects to a sqlite3 db
+    '''
     return sqlite3.connect(db_name)
 
 
 @app.before_request
 def before_request():
+    '''
+    The API must connect to one specific database before any network requests are processed
+    '''
     g.db = connect_db(app.config['DATABASE'])
 
 def random_string():
+    '''
+        This helper functions always generates a random string of length 20 for the purposes of assigning access_token
+        !NOT IMPLEMENTED!
+    '''
     return "".join(random.choice(string.printable) for _ in range(20))
 
-# implement your views here
+
 @app.route('/login', methods=['POST'])
 @json_only
 def login(data):
+    '''
+    Usage: POST request (user submits credentials) while URL ends with '/login'
+    
+    -data is json pulled from the request object (data = request.get_json()). It is automatically passed
+        into this function by way of the json_only decorator.
+        
+    This function will log the user into the website by generating an auth record if the 
+    provided username and password match the record in the db.
+    '''
     # actually check that the user is in
     user_name = data['username']
     cursor = g.db.cursor() # https://docs.python.org/3/library/sqlite3.html#sqlite3.Connection.execute
@@ -55,6 +74,14 @@ def login(data):
 @app.route('/logout', methods=['POST'])
 @json_only
 def logout(data):
+    '''
+    Usage: POST request (user clicks logout button)
+    
+    -data is json pulled from the request object (data = request.get_json()). It is automatically passed
+        into this function by way of the json_only decorator.
+        
+    This function will log the user out of the currently active account by removing the user's access_token db complement.
+    '''
     try:
         access_token = data['access_token']
         g.db.execute('DELETE FROM auth WHERE access_token=?', [access_token])
@@ -63,8 +90,22 @@ def logout(data):
     except KeyError:
         return abort(401)
 
-def parse_tweet(tweet_row, tweet_field='text'):
 
+def parse_tweet(tweet_row, tweet_field='text'):
+    '''
+        Helper function that fixes a formatting issue with the datetime value in a provided tweet_row
+        and maps the values of the tweet_row to a dict with properly named keys.
+        
+        Returns: formatted tweet dict
+        
+        NOTE: test_profile_resource presents a unique edge case. We have decided to the use the param 'tweet_field'
+            to handle the exception with the default val provided.
+            
+            text_field == 'text' when tweet content (e.g. text_field) is called 'text' in the profile tests.
+            
+            For the test_tweet_resource checks and all tweet functions in this program the content of the tweet
+            must be assigned to 'content', such that 'parse_tweet(tweet_row, tweet_field='content')
+    '''
     tweet_id, user_id, created, content = tweet_row
     uri_string = '/tweet/{}'.format(tweet_id)
     
@@ -82,7 +123,21 @@ def parse_tweet(tweet_row, tweet_field='text'):
 @app.route('/profile', methods=['POST'])
 @auth_and_json_only
 def post_profile(data, authorized_user_id):
+    '''
+    Usage: POST request (user clicks submit button on their profile page)
+    
+    -data is json pulled from the request object (data = request.get_json()). It is automatically passed
+        into this function by way of the auth_and_json_only decorator.
+        --first_name (str)
+        --last_name (str)
+        --birth_date (datetime)
+        --access_token (str)
         
+    -authorized_user_id is the current user's id which is
+        derived from the access_token during auth_and_json_only decorator execution
+        
+    While logged in to an authenticated account, this function updates the user's personal profile information.
+    '''
     try:
             
         if len(data) != 4:
@@ -102,7 +157,18 @@ def post_profile(data, authorized_user_id):
 @app.route('/tweet/<tweet_num>', methods=['DELETE'])
 @auth_and_json_only
 def delete_tweet(tweet_num, data, authorized_user_id):
+    '''
+    Usage: DELETE request (user clicks delete button on a tweet they posted)
     
+    -data is json pulled from the request object (data = request.get_json()). It is automatically passed
+        into this function by way of the auth_and_json_only decorator.
+        --access_token (str)
+        
+    -authorized_user_id is the current user's id which is
+        derived from the access_token during auth_and_json_only decorator execution
+        
+    While logged in to an authenticated account, this function deletes the tweet selected by the user.
+    '''
     cursor = g.db.execute('SELECT * FROM tweet WHERE id=?', [tweet_num])
     result = cursor.fetchone()
     if result is None:
@@ -121,6 +187,12 @@ def delete_tweet(tweet_num, data, authorized_user_id):
 
 @app.route('/tweet/<tweet_num>', methods=['GET'])
 def get_tweet(tweet_num):
+    '''
+    Usage: GET request (tweet sepcified in URL)
+        
+    This returns the tweet record of a given tweet 
+    If no such tweet exists in the db a 404 is thrown.
+    '''
     cursor = g.db.execute('SELECT * FROM tweet WHERE id=?', [tweet_num])
     result = cursor.fetchone()
     if result is None:
@@ -139,7 +211,19 @@ def get_tweet(tweet_num):
 @app.route('/tweet', methods=['POST'])
 @auth_and_json_only
 def post_tweet(data, authorized_user_id):
+    '''
+    Usage: POST request (user clicks submit button on their tweet feed)
+    
+    -data is json pulled from the request object (data = request.get_json()). It is automatically passed
+        into this function by way of the auth_and_json_only decorator.
+        --content (str)
+        --access_token (str)
         
+    -authorized_user_id is the current user's id which is
+        derived from the access_token during auth_and_json_only decorator execution
+        
+    While logged in to an authenticated account, this function updates the user's personal profile information.
+    '''
     try:
         
             
@@ -155,6 +239,12 @@ def post_tweet(data, authorized_user_id):
 
 @app.route('/profile/<user_name>', methods=['GET'])
 def user_page(user_name):
+    '''
+    Usage: GET request (username sepcified in URL)
+        
+    This function serves up the tweet feed of a given user_name
+    If no user_name exists in the db a 404 is thrown.
+    '''
     cursor = g.db.execute('SELECT * FROM user WHERE username=?', [user_name])
     user_data = cursor.fetchone()
 
@@ -177,21 +267,3 @@ def user_page(user_name):
         }
     
     return json.dumps(result_dict), 200,  {'Content-Type':'application/json'}
-    
-        
-
-@app.errorhandler(404)
-def not_found(e):
-    '''
-    Client was able to communicate with a given server, 
-    but the server could not find what was requested.
-    '''
-    return '', 404
-
-
-@app.errorhandler(401)
-def not_found(e):
-    '''
-    Unauthorized: Access is denied due to invalid credentials.
-    '''
-    return '', 401
