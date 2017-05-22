@@ -2,7 +2,7 @@ import sqlite3
 import json
 import random
 import string
-from twitter_api.utils import md5, json_only, auth_only
+from twitter_api.utils import md5, json_only, auth_and_json_only
 
 from flask import abort
 from flask import Flask
@@ -115,8 +115,8 @@ def post_profile(data):
 
 
 @app.route('/tweet/<tweet_num>', methods=['DELETE'])
-@json_only
-def delete_tweet(tweet_num, data):
+@auth_and_json_only
+def delete_tweet(tweet_num, data, authorized_user_id):
     
     cursor = g.db.execute('SELECT * FROM tweet WHERE id=?', [tweet_num])
     result = cursor.fetchone()
@@ -124,19 +124,8 @@ def delete_tweet(tweet_num, data):
         return abort(404)
     else:
         user_id = result[1]
-        cursor = g.db.execute('SELECT username FROM user WHERE id=?', [user_id])
-        user_name = cursor.fetchone()[0]
-        # does user_name's access_token match the access_token from the data
-        access_token = data['access_token'] #checks if data['access_token'] exists by assignment
         
-        #verify that access_token is registered to db
-        cursor = g.db.execute('SELECT id FROM auth WHERE access_token=?', [access_token]) #moves cursor to auth record matching access_token
-        account_result = cursor.fetchone()
-        if account_result is None:
-            return abort(401)
-        account_info = account_result[0]
-        
-        if account_info != user_id:
+        if authorized_user_id != user_id:
             return abort(401)
         # UPDATE table_name
         # SET column1 = value1, column2 = value2...., columnN = valueN
@@ -163,26 +152,16 @@ def get_tweet(tweet_num):
 
 
 @app.route('/tweet', methods=['POST'])
-@json_only
-def post_tweet(data):
+@auth_and_json_only
+def post_tweet(data, authorized_user_id):
         
     try:
-        #validate that data is of a proper form
-        access_token = data['access_token'] #checks if data['access_token'] exists by assignment
-        if len(data) != 2:#check that all required fields are present
-            return abort(400)
-            
-        #verify that access_token is registered to db
-        cursor = g.db.execute('SELECT id FROM auth WHERE access_token=?', [access_token]) #moves cursor to auth record matching access_token
-        account_result = cursor.fetchone()
-        if account_result is None:
-            return abort(401)
-        account_info = account_result[0]
+        
             
         # UPDATE table_name
         # SET column1 = value1, column2 = value2...., columnN = valueN
         # WHERE [condition];
-        g.db.execute('INSERT INTO tweet (user_id, content) VALUES (?, ?)', [account_info, data['content']])
+        g.db.execute('INSERT INTO tweet (user_id, content) VALUES (?, ?)', [authorized_user_id, data['content']])
         g.db.commit()
         
         return '', 201
