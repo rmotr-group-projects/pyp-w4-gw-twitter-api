@@ -10,6 +10,7 @@ class ProfileResourceTestCase(AuthorizedTwitterAPITestCase):
         response = self.client.get('/profile/testuser1')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content_type, 'application/json')
+        self.maxDiff = None
         data = json.loads(response.data.decode(response.charset))
         expected = {
             'user_id': 1,

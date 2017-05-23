@@ -1,6 +1,6 @@
 # [pyp-w4] Twitter API
 
-For today's project, we're going to turn our previous Twitter clone into an RESTful API web service.
+For today's project, we're going to turn our previous Twitter clone into a RESTful API web service.
 
 ## Setting up the database
 
