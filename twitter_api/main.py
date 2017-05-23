@@ -29,7 +29,6 @@ def before_request():
 def random_string():
     '''
         This helper functions always generates a random string of length 20 for the purposes of assigning access_token
-        !NOT IMPLEMENTED!
     '''
     return "".join(random.choice(string.printable) for _ in range(20))
 
