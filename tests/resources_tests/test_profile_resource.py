@@ -5,6 +5,8 @@ from ..test_base import AuthorizedTwitterAPITestCase
 
 
 class ProfileResourceTestCase(AuthorizedTwitterAPITestCase):
+    
+    maxDiff = None # Don't truncate differences for assertEqual
 
     def test_get_profile_successful(self):
         response = self.client.get('/profile/testuser1')

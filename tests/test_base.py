@@ -9,6 +9,8 @@ from twitter_api import app
 from twitter_api.main import connect_db
 from twitter_api.utils import md5
 
+import logging
+
 
 class BaseTwitterAPITestCase(unittest.TestCase):
 
