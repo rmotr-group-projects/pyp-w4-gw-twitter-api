@@ -5,6 +5,8 @@ from ..test_base import AuthorizedTwitterAPITestCase
 
 
 class ProfileResourceTestCase(AuthorizedTwitterAPITestCase):
+    
+    maxDiff = None
 
     def test_get_profile_successful(self):
         response = self.client.get('/profile/testuser1')
@@ -35,7 +37,7 @@ class ProfileResourceTestCase(AuthorizedTwitterAPITestCase):
         }
         self.assertEqual(data, expected)
 
-    def test_get_profile_does_not_exit(self):
+    def test_get_profile_does_not_exist(self):
         response = self.client.get('/profile/doesnotexist')
         self.assertEqual(response.status_code, 404)
 
