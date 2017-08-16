@@ -35,7 +35,8 @@ def auth_only(f):
         if 'access_token' not in request.json:
             abort(401)
         query = "SELECT a.user_id FROM auth a WHERE a.access_token=:access_token;"
-        cursor = g.db.execute(query, {'access_token': request.json['access_token']})
+        cursor = g.db.cursor()
+        cursor.execute(query, {'access_token': request.json['access_token']})
         user_id = cursor.fetchone()
         if not user_id:
             abort(401)
