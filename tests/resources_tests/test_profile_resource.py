@@ -73,7 +73,7 @@ class ProfileResourceTestCase(AuthorizedTwitterAPITestCase):
             data=json.dumps(data),
             content_type='application/json')
 
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 202)
 
         # Postconditions
         cursor = self.db.execute("select * from user where id = 1;")
