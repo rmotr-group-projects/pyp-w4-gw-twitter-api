@@ -1,40 +1,27 @@
--- sqlite3 database.db < twitter-schema.sql
-
-PRAGMA foreign_keys = ON;
-
 DROP TABLE if exists twitter_user;
 CREATE TABLE twitter_user (
-  id INTEGER PRIMARY KEY autoincrement,
+  id serial PRIMARY KEY,
   username TEXT NOT NULL,
   password TEXT NOT NULL,
   first_name TEXT,
   last_name TEXT,
-  birth_date DATE,
-  CHECK (
-      length("birth_date") = 10
-  )
+  birth_date DATE
 );
 
 DROP TABLE if exists tweet;
 CREATE TABLE tweet (
-  id INTEGER PRIMARY KEY autoincrement,
-  user_id INTEGER,
+  id serial PRIMARY KEY,
+  user_id INTEGER REFERENCES twitter_user(id),
   created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  content TEXT NOT NULL,
-  FOREIGN KEY(user_id) REFERENCES twitter_user(id),
-  CHECK(
-      typeof("content") = "text" AND
-      length("content") <= 140
-  )
+  content TEXT NOT NULL
 );
 
 DROP TABLE if exists auth;
 CREATE TABLE auth (
-  id INTEGER PRIMARY KEY autoincrement,
-  user_id INTEGER,
+  id serial PRIMARY KEY,
+  user_id INTEGER REFERENCES twitter_user(id),
   access_token TEXT NOT NULL,
-  created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY(user_id) REFERENCES twitter_user(id)
+  created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE UNIQUE INDEX auth_access_token_idx ON auth (access_token);
