@@ -2,8 +2,8 @@
 
 PRAGMA foreign_keys = ON;
 
-DROP TABLE if exists user;
-CREATE TABLE user (
+DROP TABLE if exists twitter_user;
+CREATE TABLE twitter_user (
   id INTEGER PRIMARY KEY autoincrement,
   username TEXT NOT NULL,
   password TEXT NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE tweet (
   user_id INTEGER,
   created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   content TEXT NOT NULL,
-  FOREIGN KEY(user_id) REFERENCES user(id),
+  FOREIGN KEY(user_id) REFERENCES twitter_user(id),
   CHECK(
       typeof("content") = "text" AND
       length("content") <= 140
@@ -34,7 +34,7 @@ CREATE TABLE auth (
   user_id INTEGER,
   access_token TEXT NOT NULL,
   created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY(user_id) REFERENCES user(id)
+  FOREIGN KEY(user_id) REFERENCES twitter_user(id)
 );
 
 CREATE UNIQUE INDEX auth_access_token_idx ON auth (access_token);
