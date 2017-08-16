@@ -1,0 +1,298 @@
+{
+	"id": "0282bf9c-32d1-ac87-3d11-003d9cd5fd0f",
+	"name": "RMOTR Advanced Python Course - Twitter API",
+	"description": "",
+	"order": [
+		"0bd9ab9e-dfcb-e4db-7a27-570347449678",
+		"2812ecc8-0d10-fb0e-d381-40416bee7098",
+		"647b4df7-54c5-941a-9cf1-9814370bb9d1",
+		"fe1c92e0-8856-446d-095d-34e0c490a298",
+		"806c268e-75af-1009-be14-3dd054031827",
+		"5e259209-f950-5cc7-1400-3fe59a733069",
+		"d2dd0971-172c-0c16-892d-c52183d9e6ce",
+		"3126a97f-e1ef-e31a-3201-19f34d755df2",
+		"cdd2f915-db27-557f-3310-c4fcc404c255"
+	],
+	"folders": [],
+	"folders_order": [],
+	"timestamp": 1502924210396,
+	"owner": "2084561",
+	"public": false,
+	"requests": [
+		{
+			"id": "0bd9ab9e-dfcb-e4db-7a27-570347449678",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "localhost:8080/profile/demo",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "GET",
+			"data": null,
+			"dataMode": "params",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1502924317533,
+			"name": "GET /profile/<USER>",
+			"description": "",
+			"collectionId": "0282bf9c-32d1-ac87-3d11-003d9cd5fd0f",
+			"responses": []
+		},
+		{
+			"id": "2812ecc8-0d10-fb0e-d381-40416bee7098",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "localhost:8080/tweet/1",
+			"queryParams": [],
+			"pathVariables": {},
+			"pathVariableData": [],
+			"preRequestScript": null,
+			"method": "GET",
+			"collectionId": "0282bf9c-32d1-ac87-3d11-003d9cd5fd0f",
+			"data": null,
+			"dataMode": "params",
+			"name": "GET /tweet/<ID>",
+			"description": "",
+			"descriptionFormat": "html",
+			"time": 1502924361060,
+			"version": 2,
+			"responses": [],
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {}
+		},
+		{
+			"id": "3126a97f-e1ef-e31a-3201-19f34d755df2",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "localhost:8080/profile",
+			"queryParams": [],
+			"pathVariables": {},
+			"pathVariableData": [],
+			"preRequestScript": null,
+			"method": "POST",
+			"collectionId": "0282bf9c-32d1-ac87-3d11-003d9cd5fd0f",
+			"data": [],
+			"dataMode": "raw",
+			"name": "POST /profile - Bad Request",
+			"description": "",
+			"descriptionFormat": "html",
+			"time": 1502925221888,
+			"version": 2,
+			"responses": [],
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"rawModeData": "{\n\t\"access_token\": \"RDG3WYL9ZFNOQ0J\"\n}"
+		},
+		{
+			"id": "5e259209-f950-5cc7-1400-3fe59a733069",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "localhost:8080/tweet/4",
+			"queryParams": [],
+			"pathVariables": {},
+			"pathVariableData": [],
+			"preRequestScript": null,
+			"method": "DELETE",
+			"collectionId": "0282bf9c-32d1-ac87-3d11-003d9cd5fd0f",
+			"data": [],
+			"dataMode": "raw",
+			"name": "DELETE /tweet/<ID>",
+			"description": "",
+			"descriptionFormat": "html",
+			"time": 1502924802061,
+			"version": 2,
+			"responses": [],
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"rawModeData": "{\n\t\"access_token\": \"ZPIDE84A96B8VTC\"\n}"
+		},
+		{
+			"id": "647b4df7-54c5-941a-9cf1-9814370bb9d1",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "localhost:8080/tweet",
+			"queryParams": [],
+			"pathVariables": {},
+			"pathVariableData": [],
+			"preRequestScript": null,
+			"method": "POST",
+			"collectionId": "0282bf9c-32d1-ac87-3d11-003d9cd5fd0f",
+			"data": [],
+			"dataMode": "raw",
+			"name": "POST /tweet - UNAUTHORIZED",
+			"description": "",
+			"descriptionFormat": "html",
+			"time": 1502924474676,
+			"version": 2,
+			"responses": [],
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"rawModeData": "{\n\t\"user_id\": 1\n}"
+		},
+		{
+			"id": "806c268e-75af-1009-be14-3dd054031827",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "localhost:8080/tweet",
+			"queryParams": [],
+			"pathVariables": {},
+			"pathVariableData": [],
+			"preRequestScript": null,
+			"method": "POST",
+			"collectionId": "0282bf9c-32d1-ac87-3d11-003d9cd5fd0f",
+			"data": [],
+			"dataMode": "raw",
+			"name": "POST /tweet - OK",
+			"description": "",
+			"descriptionFormat": "html",
+			"time": 1502924702710,
+			"version": 2,
+			"responses": [],
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"rawModeData": "{\n\t\"user_id\": 1,\n\t\"access_token\": \"ZPIDE84A96B8VTC\",\n\t\"content\": \"NEW TWEET!\"\n}"
+		},
+		{
+			"id": "cdd2f915-db27-557f-3310-c4fcc404c255",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "localhost:8080/profile",
+			"queryParams": [],
+			"pathVariables": {},
+			"pathVariableData": [],
+			"preRequestScript": null,
+			"method": "POST",
+			"collectionId": "0282bf9c-32d1-ac87-3d11-003d9cd5fd0f",
+			"data": [],
+			"dataMode": "raw",
+			"name": "POST /profile - OK",
+			"description": "",
+			"descriptionFormat": "html",
+			"time": 1502925310282,
+			"version": 2,
+			"responses": [],
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"rawModeData": "{\n\t\"access_token\": \"RDG3WYL9ZFNOQ0J\",\n\t\"first_name\": \"John\",\n\t\"last_name\": \"Snow\",\n\t\"birth_date\": \"2016-01-26\"\n}"
+		},
+		{
+			"id": "d2dd0971-172c-0c16-892d-c52183d9e6ce",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "localhost:8080/logout",
+			"queryParams": [],
+			"pathVariables": {},
+			"pathVariableData": [],
+			"preRequestScript": null,
+			"method": "POST",
+			"collectionId": "0282bf9c-32d1-ac87-3d11-003d9cd5fd0f",
+			"data": [],
+			"dataMode": "raw",
+			"name": "POST /logout",
+			"description": "",
+			"descriptionFormat": "html",
+			"time": 1502925005264,
+			"version": 2,
+			"responses": [],
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"rawModeData": "{\n\t\"access_token\": \"10LCRW7CP0HUN1O\"\n}"
+		},
+		{
+			"id": "fe1c92e0-8856-446d-095d-34e0c490a298",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "localhost:8080/login",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1502924953220,
+			"name": "POST /login",
+			"description": "",
+			"collectionId": "0282bf9c-32d1-ac87-3d11-003d9cd5fd0f",
+			"responses": [],
+			"rawModeData": "{\n\t\"username\": \"demo\",\n\t\"password\": \"demo\"\n}"
+		}
+	]
+}

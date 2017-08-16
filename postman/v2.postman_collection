@@ -1,0 +1,185 @@
+{
+	"variables": [],
+	"info": {
+		"name": "RMOTR Advanced Python Course - Twitter API",
+		"_postman_id": "0282bf9c-32d1-ac87-3d11-003d9cd5fd0f",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "GET /profile/<USER>",
+			"request": {
+				"url": "localhost:8080/profile/demo",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "GET /tweet/<ID>",
+			"request": {
+				"url": "localhost:8080/tweet/1",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "POST /tweet - UNAUTHORIZED",
+			"request": {
+				"url": "localhost:8080/tweet",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"user_id\": 1\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "POST /login",
+			"request": {
+				"url": "localhost:8080/login",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"username\": \"demo\",\n\t\"password\": \"demo\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "POST /tweet - OK",
+			"request": {
+				"url": "localhost:8080/tweet",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"user_id\": 1,\n\t\"access_token\": \"ZPIDE84A96B8VTC\",\n\t\"content\": \"NEW TWEET!\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "DELETE /tweet/<ID>",
+			"request": {
+				"url": "localhost:8080/tweet/4",
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"access_token\": \"ZPIDE84A96B8VTC\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "POST /logout",
+			"request": {
+				"url": "localhost:8080/logout",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"access_token\": \"10LCRW7CP0HUN1O\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "POST /profile - Bad Request",
+			"request": {
+				"url": "localhost:8080/profile",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"access_token\": \"RDG3WYL9ZFNOQ0J\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "POST /profile - OK",
+			"request": {
+				"url": "localhost:8080/profile",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"access_token\": \"RDG3WYL9ZFNOQ0J\",\n\t\"first_name\": \"John\",\n\t\"last_name\": \"Snow\",\n\t\"birth_date\": \"2016-01-26\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}
