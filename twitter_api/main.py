@@ -89,7 +89,7 @@ def get_tweet(tweet_id):
     data = {
         "id": t_id,
         "content": content,
-        "date": python_date_to_json_str(sqlite_date_to_python(dt)),
+        "date": python_date_to_json_str(dt),
         "profile": "/profile/%s" % username,
         "uri": "/tweet/%s" % t_id
     }
@@ -175,7 +175,7 @@ def get_profile(username):
         data['tweets'].append({
             "id": tweet_id,
             "text": content,
-            "date": python_date_to_json_str(sqlite_date_to_python(created)),
+            "date": python_date_to_json_str(created),
             "uri": '/tweet/{}'.format(tweet_id)
         })
         data['tweet_count'] += 1
