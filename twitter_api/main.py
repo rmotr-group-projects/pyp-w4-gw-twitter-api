@@ -1,5 +1,5 @@
-import sqlite3
 import json
+import psycopg2
 
 from flask import Flask
 from flask import g, request, url_for, abort
@@ -14,13 +14,13 @@ JSON_MIME_TYPE = 'application/json'
 app = Flask(__name__)
 
 
-def connect_db(db_name):
-    return sqlite3.connect(db_name)
+def connect_db():
+    return psycopg2.connect(app.config['DATABASE_URL'])
 
 
 @app.before_request
 def before_request():
-    g.db = connect_db(app.config['DATABASE'])
+    g.db = connect_db()
 
 
 @app.route('/login', methods=['POST'])
@@ -32,7 +32,8 @@ def login():
     password = request.json['password']
 
     query = "SELECT id, username, password from user WHERE username=:username;"
-    cursor = g.db.execute(query, {'username': username})
+    cursor = g.db.cursor()
+    cursor.execute(query, {'username': username})
     user = cursor.fetchone()
     if user is None:
         abort(404)
@@ -48,7 +49,8 @@ def login():
     params = {'user_id': user_id, 'access_token': access_token}
 
     try:
-        g.db.execute(query, params)
+        cursor = g.db.cursor()
+        cursor.execute(query, params)
         g.db.commit()
     except sqlite3.IntegrityError:
         abort(500)
@@ -65,7 +67,8 @@ def logout(user_id):
         DELETE FROM auth WHERE user_id = :user_id;
     """
     params = {'user_id': user_id}
-    g.db.execute(query, params)
+    cursor = g.db.cursor()
+    cursor.execute(query, params)
     g.db.commit()
     return "", 204
 
@@ -76,8 +79,8 @@ def get_tweet(tweet_id):
         FROM tweet t INNER JOIN user u ON u.id == t.id
         WHERE t.id=:tweet_id;
     """
-
-    cursor = g.db.execute(query, {'tweet_id': tweet_id})
+    cursor = g.db.cursor()
+    cursor.execute(query, {'tweet_id': tweet_id})
     tweet = cursor.fetchone()
     if tweet is None:
         abort(404)
@@ -104,7 +107,8 @@ def post_tweet(user_id):
                VALUES (:user_id, :content);"""
     params = {'user_id': user_id, 'content': request.json['content']}
     try:
-        g.db.execute(query, params)
+        cursor = g.db.cursor()
+        cursor.execute(query, params)
         g.db.commit()
     except sqlite3.IntegrityError:
         abort(500)
@@ -118,7 +122,8 @@ def post_tweet(user_id):
 def delete_tweet(tweet_id, user_id):
     query = "SELECT t.id, t.user_id FROM tweet t WHERE t.id=:tweet_id;"
     params = {'user_id': user_id, 'tweet_id': tweet_id}
-    cursor = g.db.execute(query, params)
+    cursor = g.db.cursor()
+    cursor.execute(query, params)
     tweet = cursor.fetchone()
     if tweet is None:
         abort(404)
@@ -127,7 +132,8 @@ def delete_tweet(tweet_id, user_id):
 
     query = "DELETE FROM tweet WHERE id=:tweet_id;"
     params = {'tweet_id': tweet_id}
-    g.db.execute(query, params)
+    cursor = g.db.cursor()
+    cursor.execute(query, params)
     g.db.commit()
     return "", 204
 
@@ -139,7 +145,8 @@ def get_profile(username):
         FROM user
         WHERE username = :username;
     """
-    cursor = g.db.execute(query, {'username': username})
+    cursor = g.db.cursor()
+    cursor.execute(query, {'username': username})
     profile = cursor.fetchone()
     if profile is None:
         abort(404)
@@ -159,7 +166,8 @@ def get_profile(username):
         FROM tweet
         WHERE user_id = :user_id;
     """
-    cursor = g.db.execute(query, {'user_id': user_id})
+    cursor = g.db.cursor()
+    cursor.execute(query, {'user_id': user_id})
     data['tweet_count'] = 0
     data['tweets'] = []
     for tweet in cursor.fetchall():
@@ -193,7 +201,8 @@ def post_profile(user_id):
         'birth_date': request.json['birth_date']
     }
     try:
-        g.db.execute(query, params)
+        cursor = g.db.cursor()
+        cursor.execute(query, params)
         g.db.commit()
     except sqlite3.IntegrityError:
         abort(500)
