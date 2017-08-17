@@ -157,7 +157,7 @@ def get_profile(username):
         "username": username,
         "first_name": first_name,
         "last_name": last_name,
-        # "birth_date": python_date_to_json_str(birth_date),
+        "birth_date": birth_date.isoformat(),
     }
 
     # fetch all user tweets
