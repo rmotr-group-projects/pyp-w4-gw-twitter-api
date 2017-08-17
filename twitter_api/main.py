@@ -31,7 +31,7 @@ def login():
     username = request.json['username']
     password = request.json['password']
 
-    query = "SELECT id, username, password from user WHERE username=%(username)s;"
+    query = "SELECT id, username, password from twitter_user WHERE username=%(username)s;"
     cursor = g.db.cursor()
     cursor.execute(query, {'username': username})
     user = cursor.fetchone()
@@ -76,7 +76,7 @@ def logout(user_id):
 @app.route('/tweet/<int:tweet_id>')
 def get_tweet(tweet_id):
     query = """SELECT t.id, t.content, t.created, u.username
-        FROM tweet t INNER JOIN user u ON u.id == t.id
+        FROM tweet t INNER JOIN twitter_user u ON u.id == t.id
         WHERE t.id=%(tweet_id)s;
     """
     cursor = g.db.cursor()
@@ -142,7 +142,7 @@ def delete_tweet(tweet_id, user_id):
 def get_profile(username):
     query = """
         SELECT id, first_name, last_name, birth_date
-        FROM user
+        FROM twitter_user
         WHERE username = %(username)s;
     """
     cursor = g.db.cursor()
@@ -191,7 +191,7 @@ def post_profile(user_id):
             abort(400)
 
     query = """
-        UPDATE user
+        UPDATE twitter_user
         SET first_name=%(first_name)s, last_name=%(last_name)s,
         birth_date=%(birth_date)s;
     """
