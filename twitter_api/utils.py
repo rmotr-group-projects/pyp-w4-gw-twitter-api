@@ -34,7 +34,7 @@ def auth_only(f):
     def decorated_function(*args, **kwargs):
         if 'access_token' not in request.json:
             abort(401)
-        query = "SELECT a.user_id FROM auth a WHERE a.access_token=:access_token;"
+        query = "SELECT a.user_id FROM auth a WHERE a.access_token=%(access_token)s;"
         cursor = g.db.cursor()
         cursor.execute(query, {'access_token': request.json['access_token']})
         user_id = cursor.fetchone()

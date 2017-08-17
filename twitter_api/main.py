@@ -31,7 +31,7 @@ def login():
     username = request.json['username']
     password = request.json['password']
 
-    query = "SELECT id, username, password from user WHERE username=:username;"
+    query = "SELECT id, username, password from user WHERE username=%(username)s;"
     cursor = g.db.cursor()
     cursor.execute(query, {'username': username})
     user = cursor.fetchone()
@@ -45,7 +45,7 @@ def login():
     # All good!
     access_token = generate_random_token()
     query = """INSERT INTO auth ("user_id", "access_token")
-               VALUES (:user_id, :access_token);"""
+               VALUES (%(user_id)s, %(access_token)s);"""
     params = {'user_id': user_id, 'access_token': access_token}
 
     try:
@@ -64,7 +64,7 @@ def login():
 @auth_only
 def logout(user_id):
     query = """
-        DELETE FROM auth WHERE user_id = :user_id;
+        DELETE FROM auth WHERE user_id = %(user_id)s;
     """
     params = {'user_id': user_id}
     cursor = g.db.cursor()
@@ -77,7 +77,7 @@ def logout(user_id):
 def get_tweet(tweet_id):
     query = """SELECT t.id, t.content, t.created, u.username
         FROM tweet t INNER JOIN user u ON u.id == t.id
-        WHERE t.id=:tweet_id;
+        WHERE t.id=%(tweet_id)s;
     """
     cursor = g.db.cursor()
     cursor.execute(query, {'tweet_id': tweet_id})
@@ -104,7 +104,7 @@ def post_tweet(user_id):
         abort(400)
 
     query = """INSERT INTO tweet ("user_id", "content")
-               VALUES (:user_id, :content);"""
+               VALUES (%(user_id)s, %(content)s);"""
     params = {'user_id': user_id, 'content': request.json['content']}
     try:
         cursor = g.db.cursor()
@@ -120,7 +120,7 @@ def post_tweet(user_id):
 @json_only
 @auth_only
 def delete_tweet(tweet_id, user_id):
-    query = "SELECT t.id, t.user_id FROM tweet t WHERE t.id=:tweet_id;"
+    query = "SELECT t.id, t.user_id FROM tweet t WHERE t.id=%(tweet_id)s;"
     params = {'user_id': user_id, 'tweet_id': tweet_id}
     cursor = g.db.cursor()
     cursor.execute(query, params)
@@ -130,7 +130,7 @@ def delete_tweet(tweet_id, user_id):
     if tweet[1] != user_id:
         abort(401)
 
-    query = "DELETE FROM tweet WHERE id=:tweet_id;"
+    query = "DELETE FROM tweet WHERE id=%(tweet_id)s;"
     params = {'tweet_id': tweet_id}
     cursor = g.db.cursor()
     cursor.execute(query, params)
@@ -143,7 +143,7 @@ def get_profile(username):
     query = """
         SELECT id, first_name, last_name, birth_date
         FROM user
-        WHERE username = :username;
+        WHERE username = %(username)s;
     """
     cursor = g.db.cursor()
     cursor.execute(query, {'username': username})
@@ -164,7 +164,7 @@ def get_profile(username):
     query = """
         SELECT id, created, content
         FROM tweet
-        WHERE user_id = :user_id;
+        WHERE user_id = %(user_id)s;
     """
     cursor = g.db.cursor()
     cursor.execute(query, {'user_id': user_id})
@@ -192,8 +192,8 @@ def post_profile(user_id):
 
     query = """
         UPDATE user
-        SET first_name=:first_name, last_name=:last_name,
-        birth_date=:birth_date;
+        SET first_name=%(first_name)s, last_name=%(last_name)s,
+        birth_date=%(birth_date)s;
     """
     params = {
         'first_name': request.json['first_name'],
