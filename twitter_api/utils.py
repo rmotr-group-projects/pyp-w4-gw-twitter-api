@@ -27,7 +27,7 @@ def md5(token):
      conversion of the token to bytes if run in Python 3
      """
      m = hashlib.md5()
-     m.update(token)
+     m.update(token.encode('UTF-8'))
      return m
 
 def get_user_from_token(req, token_attr):

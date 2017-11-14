@@ -104,7 +104,7 @@ def profile_list(username):
 
 def generate_token():
     m = hashlib.sha1()
-    m.update(str(random.randint(-10000000,100000000)))
+    m.update(str(random.randint(-10000000,100000000)).encode(('UTF-8')))
     return m.hexdigest()
     
 @app.route('/login', methods=['POST'])
