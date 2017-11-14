@@ -94,40 +94,75 @@ def get_profile(username):
 
 @app.route("/login", methods=['POST'])
 def login():
+    # Request the POST from user
     user_data = request.json
+    # Retrieve username and password if sent else return HTTP 400 error
     username = user_data['username']
     if 'password' not in user_data.keys():
         abort(400)
+    # Here we retrieve the password but only deal with it hashed
     password = md5(user_data['password']).hexdigest()
+    # Convert g.db to row_factory so we can fetch a dictionary later on
     g.db.row_factory = sqlite3.Row
+    # We do an initial query to check if the user exist and to extract
+    # user_id and password for another query and password confirmation
     does_user_exist = """
-    SELECT 
+    SELECT
         u.id as user_id, u.password as password
     FROM
         user as u
     WHERE
         u.username == :username
     """
-    user_exist = g.db.execute(does_user_exist, {'username':username, 
-                                                'password':password})
+
+    user_exist = g.db.execute(does_user_exist, {'username': username,
+                                                'password': password})
     user_fetch = user_exist.fetchone()
+    # If user_fetch returns None bring up 404
     if not user_fetch:
         abort(404)
-    user_auth= dict(user_fetch)
+
+    # Dictionary conversion
+    user_auth = dict(user_fetch)
+    # We both remove and return the password element and check if it is correct
     if user_auth.pop('password') != password:
         abort(401)
-    query = """
+
+    insert_query = """
     INSERT INTO auth (
         user_id, access_token)
     VALUES (
         :user_id,:access_token);
     """
+    # Creating a uniqe access_token and storing it in the user_auth dictionary
     user_auth['access_token'] = uuid4().hex
-    auth_cursor = g.db.execute(query, user_auth)
+    # Sending the query and commiting it to the database
+    g.db.execute(insert_query, user_auth)
     g.db.commit()
+    # converting the user_auth dict to json
     auth_json = json.dumps(user_auth)
-    return auth_json, 201, {'Content-Type':JSON_MIME_TYPE}
+    # submitting response to user can also use make_response() or Resopnse()
+    # all three take data, HTTP Status Code, Content-Type as dictionary
+    return auth_json, 201, {'Content-Type': JSON_MIME_TYPE}
+
+
+@app.route("/logout", methods=['POST'])
+def logout():
+    user_passed_data = request.json
+    # If try fails means no access_token given
+    if 'access_token' not in user_passed_data.keys():
+        abort(401)
     
+    delete_query= """
+    DELETE
+    FROM
+        auth
+    WHERE
+        access_token = :access_token
+    """
+    g.db.execute(delete_query, user_passed_data)
+    g.db.commit()
+    return '', 204
 
 @app.errorhandler(404)
 def not_found(e):
