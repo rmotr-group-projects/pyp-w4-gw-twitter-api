@@ -19,38 +19,51 @@ def before_request():
 
 
 # implement your views here
-@app.route('/login', methods=['POST', 'GET'])
+@app.route('/login', methods=['POST'])
 @json_only
 def login():
-    if request.method == 'POST':
-        data = request.get_json()
-        
-        if 'password' not in data:
-            return 'Missing password', 400
-        
-        params = {
-            'username': data['username'],
-            'password': md5(data['password']).hexdigest()
-        }
-        cursor = g.db.execute('SELECT * FROM user WHERE username = :username AND password = :password;', params)
-        user = cursor.fetchone()
-        if user:
-            # generate token
-            random_bytes = urandom(64)
-            access_token = b64encode(random_bytes).decode('utf-8')
-            # insert into auth
-            params = {'user_id' : user[0], 'access_token' : access_token}
-            g.db.execute('INSERT INTO auth (user_id, access_token) VALUES (:user_id, :access_token);', params)
-            g.db.commit()
-            return (jsonify({'access_token': access_token}), 201)
-        
-        cursor = g.db.execute('SELECT * FROM user WHERE username = :username OR password = :password;', params)
-        user = cursor.fetchone()
-        if user[1] == params['username']:
-            return 'Incorrect Password', 401
-        else:
-            return 'Username does not exists', 404
+    data = request.get_json()
+    
+    if 'password' not in data:
+        return 'Missing password', 400
+    
+    params = {
+        'username': data['username'],
+        'password': md5(data['password']).hexdigest()
+    }
+    cursor = g.db.execute('SELECT * FROM user WHERE username = :username AND password = :password;', params)
+    user = cursor.fetchone()
+    if user:
+        # generate token
+        random_bytes = urandom(64)
+        access_token = b64encode(random_bytes).decode('utf-8')
+        # insert into auth
+        params = {'user_id' : user[0], 'access_token' : access_token}
+        g.db.execute('INSERT INTO auth (user_id, access_token) VALUES (:user_id, :access_token);', params)
+        g.db.commit()
+        return (jsonify({'access_token': access_token}), 201)
+    
+    cursor = g.db.execute('SELECT * FROM user WHERE username = :username OR password = :password;', params)
+    user = cursor.fetchone()
+    if user[1] == params['username']:
+        return 'Incorrect Password', 401
+    else:
+        return 'Username does not exists', 404
 
+@app.route('/logout', methods=['POST'])
+@json_only
+def logout():
+    data = request.get_json()
+    
+    if 'access_token' not in data:
+        return '', 401
+    
+    params = {
+        'access_token': data['access_token']
+    }
+    g.db.execute('DELETE FROM auth where access_token = :access_token;', params)
+    g.db.commit()
+    return '', 204
 
 @app.errorhandler(404)
 def not_found(e):
