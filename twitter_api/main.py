@@ -16,13 +16,14 @@ def connect_db(db_name):
 @app.before_request
 def before_request():
     g.db = connect_db(app.config['DATABASE'])
+    # Added row_factory here
+    g.db.row_factory = sqlite3.Row
 
 
 @app.route("/tweet/<int:TWEET_ID>", methods=['GET','DELETE'])
 @auth_only
 def get_tweet(TWEET_ID):
     # This is outside the if request.method because it is used in both codes.
-    g.db.row_factory = sqlite3.Row
     query = """
     SELECT
         t.id as id, u.username as profile, t.created as date,
@@ -72,7 +73,6 @@ def get_tweet(TWEET_ID):
 @auth_only
 def post_tweet():
     post_data = request.json
-    g.db.row_factory = sqlite3.Row
     check_auth_query = """
     SELECT 
         user_id
@@ -101,50 +101,65 @@ def post_tweet():
     g.db.commit()
     return '', 201
 
-@app.route("/profile/<username>",methods=['POST', 'GET'])
-def profile(username):
-    if request.method == 'GET':
-        query = """
-        SELECT
-            u.id as user_id, u.username as username,
-            u.first_name as first_name, u.last_name as last_name,
-            u.birth_date as birth_date
-        FROM
-            user u
-        WHERE
-            u.username == '{}'
-        """
-        g.db.row_factory = sqlite3.Row
-        profile_cursor = g.db.execute(query.format(username))
-        profile_fetch = profile_cursor.fetchone()
-        if not profile_fetch:
-            abort(404)
-        profile_dict = dict(profile_fetch)
-        profile_dict['tweet_count'] = 0
-        tweet_query = """
-        SELECT
-            t.created as date, t.id as id, t.content as text
-        FROM
-            tweet t
-        NATURAL JOIN
-            user
-        WHERE
-            t.user_id = '{}'
-        """
-        tweets_cursor = g.db.execute(tweet_query.format(profile_dict['user_id']))
-        tweet_fetch = [dict(tweet) for tweet in tweets_cursor.fetchall()]
-        for tweet_dict in tweet_fetch:
-            profile_dict['tweet_count'] += 1
-            tweet_dict['uri'] = '/tweet/{}'.format(tweet_dict['id'])
-            time = datetime.datetime.strptime(tweet_dict['date'],
-                                              '%Y-%m-%d %H:%M:%S')
-            tweet_dict['date'] = time.strftime('%Y-%m-%dT%H:%M:%S')
-    
-        profile_dict['tweets'] = tweet_fetch
-        profile_json = json.dumps(profile_dict)
-        return profile_json, 200, {'Content-Type': JSON_MIME_TYPE}
-    elif request.method == 'POST':
-        pass
+@app.route("/profile/<username>",methods=['GET'])
+def get_profile(username):
+    query = """
+    SELECT
+        u.id as user_id, u.username as username,
+        u.first_name as first_name, u.last_name as last_name,
+        u.birth_date as birth_date
+    FROM
+        user u
+    WHERE
+        u.username == '{}'
+    """
+    profile_cursor = g.db.execute(query.format(username))
+    profile_fetch = profile_cursor.fetchone()
+    if not profile_fetch:
+        abort(404)
+    profile_dict = dict(profile_fetch)
+    profile_dict['tweet_count'] = 0
+    tweet_query = """
+    SELECT
+        t.created as date, t.id as id, t.content as text
+    FROM
+        tweet t
+    NATURAL JOIN
+        user
+    WHERE
+        t.user_id = '{}'
+    """
+    tweets_cursor = g.db.execute(tweet_query.format(profile_dict['user_id']))
+    tweet_fetch = [dict(tweet) for tweet in tweets_cursor.fetchall()]
+    for tweet_dict in tweet_fetch:
+        profile_dict['tweet_count'] += 1
+        tweet_dict['uri'] = '/tweet/{}'.format(tweet_dict['id'])
+        time = datetime.datetime.strptime(tweet_dict['date'],
+                                          '%Y-%m-%d %H:%M:%S')
+        tweet_dict['date'] = time.strftime('%Y-%m-%dT%H:%M:%S')
+
+    profile_dict['tweets'] = tweet_fetch
+    profile_json = json.dumps(profile_dict)
+    return profile_json, 200, {'Content-Type': JSON_MIME_TYPE}
+
+
+@app.route("/profile", methods=['POST'])
+@json_only
+@auth_only
+def post_profile():
+    g.db.row_factory = sqlite3.Row
+    profile_query = """
+    SELECT
+        a.access_token as access_token, u.first_name as first_name,
+        u.last_name as last_name, u.birth_date as birth_date
+    FROM
+        auth a
+    NATURAL INNER JOIN
+        user u
+    WHERE
+        access_token = :access_token
+    """
+    profile_access_check = g.db
 
 
 @app.route("/login", methods=['POST'])
@@ -202,12 +217,9 @@ def login():
 
 
 @app.route("/logout", methods=['POST'])
+@auth_only
 def logout():
     user_passed_data = request.json
-    # If try fails means no access_token given
-    if 'access_token' not in user_passed_data.keys():
-        abort(401)
-    
     delete_query= """
     DELETE
     FROM
