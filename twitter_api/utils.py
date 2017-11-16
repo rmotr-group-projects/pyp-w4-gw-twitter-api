@@ -1,5 +1,6 @@
 from functools import wraps
 import hashlib
+from flask import request, abort, g
 
 JSON_MIME_TYPE = 'application/json'
 
@@ -14,13 +15,19 @@ def auth_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         # implement your logic here
-        return f(*args, **kwargs)
+        if request.method =='GET':
+            return f(*args, **kwargs)
+        elif request.method in ['DELETE','POST']:
+            if 'access_token' not in request.json:
+                abort(401)
+            return f(*args, **kwargs)
     return decorated_function
 
 
 def json_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # implement your logic here
+        if request.content_type != JSON_MIME_TYPE:
+                abort(400)
         return f(*args, **kwargs)
     return decorated_function
