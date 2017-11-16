@@ -10,7 +10,7 @@ def md5(token):
     Returns an md5 hash of a token passed as a string, performing an internal
     conversion of the token to bytes if run in Python 3
     """
-    return hashlib.md5(str.encode(token, utf-8'))
+    return hashlib.md5(str.encode(token, 'utf-8'))
 
 
 def auth_only(f):
