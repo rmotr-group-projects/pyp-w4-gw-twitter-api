@@ -192,7 +192,7 @@ def login():
     if 'password' not in user_data:
         abort(400)
     # Here we retrieve the password but only deal with it hashed
-    password = md5(str.encode(user_data['password'], 'utf-8')).hexdigest()
+    password = md5(str(user_data['password']).encode('utf-8')).hexdigest()
     # We do an initial query to check if the user exist and to extract
     # user_id and password for another query and password confirmation
     does_user_exist = """
