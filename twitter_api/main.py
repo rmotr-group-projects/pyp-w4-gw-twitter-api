@@ -147,19 +147,40 @@ def get_profile(username):
 @json_only
 @auth_only
 def post_profile():
-    g.db.row_factory = sqlite3.Row
+    list_of_required = ['access_token', 'first_name',
+                                      'last_name','birth_date']
+    profile_update = request.json
+    if not all([True if key in profile_update
+                else False for key in list_of_required]):
+        abort(400)
     profile_query = """
     SELECT
-        a.access_token as access_token, u.first_name as first_name,
-        u.last_name as last_name, u.birth_date as birth_date
+        u.id as id
     FROM
         auth a
     NATURAL INNER JOIN
         user u
     WHERE
-        access_token = :access_token
+        a.access_token = :access_token
     """
-    profile_access_check = g.db
+    profile_access_check = g.db.execute(profile_query, profile_update)
+    profile_fetch = profile_access_check.fetchone()
+    if not profile_fetch:
+        abort(401)
+    profile_update.update(dict(profile_fetch))
+    update_query ="""
+    UPDATE
+        user
+    SET
+        first_name == :first_name,
+        last_name == :last_name,
+        birth_date == :birth_date
+    WHERE
+        id = :id
+    """
+    g.db.execute(update_query, profile_update)
+    g.db.commit()
+    return '',202
 
 
 @app.route("/login", methods=['POST'])
@@ -172,8 +193,6 @@ def login():
         abort(400)
     # Here we retrieve the password but only deal with it hashed
     password = md5(user_data['password']).hexdigest()
-    # Convert g.db to row_factory so we can fetch a dictionary later on
-    g.db.row_factory = sqlite3.Row
     # We do an initial query to check if the user exist and to extract
     # user_id and password for another query and password confirmation
     does_user_exist = """
