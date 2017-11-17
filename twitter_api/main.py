@@ -1,6 +1,9 @@
 import json
 import sqlite3
+# importing datetime to change created into datetime object to easily change
+# the time string format as needed
 import datetime
+# Importing uuid4 to create unique authentication tokens
 from uuid import uuid4
 from .utils import JSON_MIME_TYPE, md5, json_only, auth_only
 
@@ -20,7 +23,7 @@ def before_request():
     g.db.row_factory = sqlite3.Row
 
 
-@app.route("/tweet/<int:TWEET_ID>", methods=['GET','DELETE'])
+@app.route("/tweet/<int:TWEET_ID>", methods=['GET', 'DELETE'])
 @auth_only
 def get_tweet(TWEET_ID):
     # This is outside the if request.method because it is used in both codes.
@@ -32,9 +35,9 @@ def get_tweet(TWEET_ID):
         tweet t
     NATURAL INNER JOIN
         user u
-    INNER JOIN 
+    INNER JOIN
         auth a
-    ON 
+    ON
         a.user_id = u.id
     WHERE
         t.id == '{}'
@@ -46,10 +49,11 @@ def get_tweet(TWEET_ID):
     if not tweet_fetch:
         abort(404)
     tweet_dict = dict(tweet_fetch)
-    if  request.method == 'GET':   
+    if request.method == 'GET':
         tweet_dict['uri'] = '/tweet/{}'.format(TWEET_ID)
         tweet_dict['profile'] = '/profile/{}'.format(tweet_dict['profile'])
-        time = datetime.datetime.strptime(tweet_dict['date'], '%Y-%m-%d %H:%M:%S')
+        time = datetime.datetime.strptime(tweet_dict['date'],
+                                          '%Y-%m-%d %H:%M:%S')
         tweet_dict['date'] = time.strftime('%Y-%m-%dT%H:%M:%S')
         tweet_json = json.dumps(tweet_dict)
         return tweet_json, 200, {'Content-Type': JSON_MIME_TYPE}
@@ -64,9 +68,10 @@ def get_tweet(TWEET_ID):
         WHERE
             id == :id
         """
-        g.db.execute(delete_query,tweet_dict)
+        g.db.execute(delete_query, tweet_dict)
         g.db.commit()
-        return '',204
+        return '', 204
+
 
 @app.route("/tweet", methods=['POST'])
 @json_only
@@ -74,7 +79,7 @@ def get_tweet(TWEET_ID):
 def post_tweet():
     post_data = request.json
     check_auth_query = """
-    SELECT 
+    SELECT
         user_id
     FROM
         auth
@@ -82,7 +87,7 @@ def post_tweet():
         access_token == :access_token
     """
     auth_check = g.db.execute(check_auth_query,
-                               {'access_token':post_data['access_token']})
+                              {'access_token': post_data['access_token']})
     auth_fetch = auth_check.fetchone()
     if not auth_fetch:
         abort(401)
@@ -90,18 +95,19 @@ def post_tweet():
     post_dict = dict(auth_fetch)
     post_dict['content'] = post_data['content']
     post_dict['created'] = current_time.strftime('%Y-%m-%d %H:%M:%S')
-    post_query ="""
+    post_query = """
     INSERT INTO
         tweet(user_id, created, content)
     VALUES(
     :user_id, :created, :content
     );
     """
-    g.db.execute(post_query,post_dict)
+    g.db.execute(post_query, post_dict)
     g.db.commit()
     return '', 201
 
-@app.route("/profile/<username>",methods=['GET'])
+
+@app.route("/profile/<username>", methods=['GET'])
 def get_profile(username):
     query = """
     SELECT
@@ -148,7 +154,7 @@ def get_profile(username):
 @auth_only
 def post_profile():
     list_of_required = ['access_token', 'first_name',
-                                      'last_name','birth_date']
+                        'last_name', 'birth_date']
     profile_update = request.json
     if not all([True if key in profile_update
                 else False for key in list_of_required]):
@@ -168,7 +174,7 @@ def post_profile():
     if not profile_fetch:
         abort(401)
     profile_update.update(dict(profile_fetch))
-    update_query ="""
+    update_query = """
     UPDATE
         user
     SET
@@ -180,7 +186,7 @@ def post_profile():
     """
     g.db.execute(update_query, profile_update)
     g.db.commit()
-    return '',202
+    return '', 202
 
 
 @app.route("/login", methods=['POST'])
@@ -239,7 +245,7 @@ def login():
 @auth_only
 def logout():
     user_passed_data = request.json
-    delete_query= """
+    delete_query = """
     DELETE
     FROM
         auth
@@ -249,6 +255,7 @@ def logout():
     g.db.execute(delete_query, user_passed_data)
     g.db.commit()
     return '', 204, {'Content-Type': JSON_MIME_TYPE}
+
 
 @app.errorhandler(404)
 def not_found(e):
