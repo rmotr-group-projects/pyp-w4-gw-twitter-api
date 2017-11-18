@@ -16,6 +16,8 @@ def auth_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         # implement your logic here
+        if 'access_token' not in request.get_json():
+            abort(401)
         return f(*args, **kwargs)
     return decorated_function
 
