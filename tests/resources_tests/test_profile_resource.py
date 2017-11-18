@@ -33,6 +33,7 @@ class ProfileResourceTestCase(AuthorizedTwitterAPITestCase):
             ],
             'tweet_count': 2,
         }
+        self.maxDiff = None
         self.assertEqual(data, expected)
 
     def test_get_profile_does_not_exit(self):
