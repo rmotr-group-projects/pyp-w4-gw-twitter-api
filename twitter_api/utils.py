@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import request, abort
+from flask import g, request, abort
 
 import hashlib
 
@@ -15,9 +15,17 @@ def md5(token):
 def auth_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # implement your logic here
-        if 'access_token' not in request.get_json():
-            abort(401)
+        if request.method in ['POST', 'DELETE']:
+            data = request.get_json()
+            if 'access_token' not in data:
+                abort(401)
+    
+            cursor = g.db.execute('SELECT * FROM auth WHERE access_token = :access_token', 
+                                    { 'access_token' : data['access_token'] })
+            auth = cursor.fetchone()
+            if auth == None:
+                abort(401)
+        
         return f(*args, **kwargs)
     return decorated_function
 

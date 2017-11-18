@@ -12,13 +12,11 @@ app = Flask(__name__)
 def connect_db(db_name):
     return sqlite3.connect(db_name)
 
-
 @app.before_request
 def before_request():
     g.db = connect_db(app.config['DATABASE'])
 
 
-# implement your views here
 @app.route('/login', methods=['POST'])
 @json_only
 def login():
@@ -102,17 +100,12 @@ def post_profile():
     if 'first_name' not in data:
         return 'Missing first name', 400
     
-    param = { 'access_token' : data['access_token'] }
-    cursor = g.db.execute('SELECT user_id FROM auth WHERE access_token = :access_token', param)
+    cursor = g.db.execute('SELECT user_id FROM auth WHERE access_token = :access_token', 
+                            { 'access_token' : data['access_token'] })
     auth = cursor.fetchone()
-    
-    if auth:
-        user_id = auth[0]
-    else:
-        return 'Invalid access token', 401
-    
+
     params = {
-        'user_id' : user_id,
+        'user_id' : auth[0],
         'first_name' : data['first_name'],
         'last_name' : data['last_name'],
         'birth_date' : data['birth_date']
@@ -120,8 +113,70 @@ def post_profile():
     g.db.execute('UPDATE user SET first_name = :first_name, last_name = :last_name, birth_date = :birth_date '\
                   'WHERE id = :user_id', params)
     g.db.commit()
-    return 'Update completed', 202
+    return 'Update profile completed', 202
 
+@app.route('/tweet/<int:id>', methods=['GET', 'DELETE'])
+@auth_only
+def get_tweet(id):
+    param = {'id' : id}
+    
+    if request.method == 'GET':
+        cursor = g.db.execute('SELECT t.created, t.id, t.content, u.username ' \
+                              'FROM tweet t INNER JOIN user u ' \
+                              'ON t.user_id = u.id WHERE t.id = :id', param)
+        data = cursor.fetchone()
+        
+        if data:
+            result = dict(date=data[0].replace(' ', 'T'), id=data[1], 
+                                   content=data[2], uri='/tweet/{}'.format(data[1]),
+                                   profile='/profile/{}'.format(data[3]))
+            
+            return (jsonify(result), 200)
+        else:
+            return 'Tweet Id not found', 404
+    else:
+        cursor = g.db.execute('SELECT * FROM tweet WHERE id = :id', param)
+        tweet = cursor.fetchone()
+        if tweet == None:
+            return 'tweet id does not exists', 404
+        
+        request_data = request.get_json()
+        cursor = g.db.execute('SELECT user_id FROM auth WHERE access_token = :access_token', 
+                                { 'access_token' : request_data['access_token']})
+        auth = cursor.fetchone()
+        param['user_id'] = auth[0]
+        
+        cursor = g.db.execute('SELECT t.created, t.id, t.content, u.username ' \
+                              'FROM tweet t INNER JOIN user u ' \
+                              'ON t.user_id = u.id ' \
+                              'WHERE t.id = :id ' \
+                              'AND t.user_id = :user_id', param)
+        data = cursor.fetchone()
+        if data:
+            g.db.execute('DELETE FROM tweet WHERE id = :id', param)
+            g.db.commit()
+            return 'Tweet deleted', 204
+        else:
+            return 'Unable to delete tweet that does not belong to you', 401
+
+@app.route('/tweet', methods=['POST'])
+@json_only
+@auth_only
+def post_tweet():
+    data = request.get_json()
+    
+    cursor = g.db.execute('SELECT user_id FROM auth WHERE access_token = :access_token', 
+                            { 'access_token' : data['access_token'] })
+    auth = cursor.fetchone()
+        
+    params = {
+        'user_id' : auth[0],
+        'content' : data['content']
+    }
+    g.db.execute('INSERT INTO tweet (user_id, content) VALUES ( '\
+                  ':user_id, :content);', params)
+    g.db.commit()
+    return 'Inserted tweet', 201
 
 @app.errorhandler(404)
 def not_found(e):
