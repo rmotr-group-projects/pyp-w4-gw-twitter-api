@@ -16,9 +16,10 @@ def md5(token):
 def auth_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # implement your logic here
+        # if request method is get no access needed
         if request.method == 'GET':
             return f(*args, **kwargs)
+        # if request method is DELETE or POST Check if access_token in request
         elif request.method in ['DELETE', 'POST']:
             if 'access_token' not in request.json:
                 abort(401)
@@ -31,5 +32,6 @@ def json_only(f):
     def decorated_function(*args, **kwargs):
         if request.content_type != JSON_MIME_TYPE:
                 abort(400)
+        # Might add here if f doesn't return a json object abort
         return f(*args, **kwargs)
     return decorated_function
