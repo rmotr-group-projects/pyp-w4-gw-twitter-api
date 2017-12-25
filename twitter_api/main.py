@@ -1,7 +1,6 @@
 import sqlite3
 
-from flask import Flask
-from flask import g
+from flask import Flask, g, abort
 import json
 from .utils import (JSON_MIME_TYPE, python_date_to_json_str, sqlite_date_to_python)
 
@@ -28,14 +27,18 @@ def get_tweet(tweet_id):
         ON u.id = t.id
         WHERE t.id=:tweet_id;"""
 
+    # create a cursor object, which is similar to an iterator
     cursor = g.db.execute(query, {'tweet_id': tweet_id})
 
-    u_id, username, content, dt_created = cursor.fetchone()
+    # fetchone is much like the next() function applied to
+    # an iterator
+    tweet = cursor.fetchone()
 
-    # implement error if id doesnt exist
+    if tweet is None:
+        abort(404)
 
-    # FIX dt_created here !!! see how data is parsed in solutions !!!
-    # what is the point of the python_date_to_json_str() and sqlite_date_to_python() functions???
+    u_id, username, content, dt_created = tweet
+
     tweet_data = {
        'id': u_id,
        'content': content,
