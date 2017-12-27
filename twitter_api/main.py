@@ -1,8 +1,8 @@
 import sqlite3
 
-from flask import Flask, g, abort
+from flask import Flask, g, abort, request
 import json
-from .utils import (JSON_MIME_TYPE, python_date_to_json_str, sqlite_date_to_python)
+from .utils import (JSON_MIME_TYPE, auth_only, json_only, python_date_to_json_str, sqlite_date_to_python)
 
 
 app = Flask(__name__)
@@ -17,8 +17,8 @@ def before_request():
     g.db = connect_db(app.config['DATABASE'])
 
 
-@app.route('/tweet/<int:tweet_id>')
-def get_tweet(tweet_id):
+@app.route('/tweet/<int:tweet_id>', methods=['GET'])
+def get_tweet_user(tweet_id):
 
     query = """
         SELECT u.id, u.username, t.content, t.created
@@ -52,19 +52,34 @@ def get_tweet(tweet_id):
     return content, 200, {'Content-Type': JSON_MIME_TYPE}
 
 
+@app.route('/tweet', methods=['POST'])
+@json_only
+@auth_only
+def tweet_post(user_id):
+    """
+    Given a post request by the web client, check the access token of the user making the requests (made possible by the auth_only decorator) and if user has a valid access token, insert their post in the tweet database
+
+    user_id is given by the auth_only decorator
+    """
+    if 'content' not in request.json:
+        abort(400)
+
+    insert_query = """
+            INSERT INTO tweet ("user_id", "content")
+            VALUES (:user_id, :content);
+    """
+
+    params = {
+        'user_id': user_id,
+        'content': request.json['content']
+    }
+
+    g.db.execute(insert_query, params)
+    g.db.commit()
+
+    return '', 201
+
+
 @app.errorhandler(404)
 def not_found(e):
     return '', 404
-
-
-@app.errorhandler(401)
-def not_found(e):
-    return '', 401
-
-
-def testing():
-    print("hellow")
-
-
-if __name__ == '__main__':
-    testing()
