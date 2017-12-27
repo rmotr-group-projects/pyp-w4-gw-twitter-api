@@ -40,11 +40,11 @@ def get_tweet_user(tweet_id):
     u_id, username, content, dt_created = tweet
 
     tweet_data = {
-       'id': u_id,
-       'content': content,
-       'date': python_date_to_json_str(sqlite_date_to_python(dt_created)),
-       'profile': '/profile/{}'.format(username),
-       'uri': '/tweet/{}'.format(tweet_id)
+        'id': u_id,
+        'content': content,
+        'date': python_date_to_json_str(sqlite_date_to_python(dt_created)),
+        'profile': '/profile/{}'.format(username),
+        'uri': '/tweet/{}'.format(tweet_id)
     }
 
     content = json.dumps(tweet_data)
@@ -78,6 +78,38 @@ def tweet_post(user_id):
     g.db.commit()
 
     return '', 201
+
+
+@app.route('/tweet/<int:tweet_id>', methods=['DELETE'])
+@auth_only
+def tweet_delete(user_id, tweet_id):
+
+    param = {'tweet_id': tweet_id}
+
+    # check if tweet exists (if not, abort with status code 404)
+    check_query = """
+            SELECT id, user_id FROM tweet
+            WHERE id=:tweet_id;
+    """
+    cursor = g.db.execute(check_query, param)
+
+    tweet = cursor.fetchone()
+
+    if not tweet:
+        abort(404)
+
+    if tweet[1] != user_id:
+        abort(401)
+
+    # if book exists, delete it
+    delete_query = """
+            DELETE FROM tweet
+            WHERE tweet.id=:tweet_id
+    """
+    g.db.execute(delete_query, param)
+    g.db.commit()
+
+    return '', 204
 
 
 @app.errorhandler(404)
