@@ -24,7 +24,7 @@ def get_tweet_user(tweet_id):
         SELECT u.id, u.username, t.content, t.created
         FROM user u
         INNER JOIN tweet t
-        ON u.id = t.id
+        ON u.id = t.user_id
         WHERE t.id=:tweet_id;"""
 
     # create a cursor object, which is similar to an iterator
@@ -101,7 +101,7 @@ def tweet_delete(user_id, tweet_id):
     if tweet[1] != user_id:
         abort(401)
 
-    # if book exists, delete it
+    # if tweet exists, delete it
     delete_query = """
             DELETE FROM tweet
             WHERE tweet.id=:tweet_id
@@ -112,6 +112,79 @@ def tweet_delete(user_id, tweet_id):
     return '', 204
 
 
+@app.route('/profile/<username>')
+def get_profile(username):
+
+    # from user, need username, first_name, last_name, birth_date
+    # from tweet, need tweet id (id), created, content, url (which is /tweet/:id)
+    # need to create tweet count (len of tweets)
+
+    query = """
+        SELECT
+            u.id, u.username, u.first_name, u.last_name, u.birth_date,
+            t.created, t.id, t.content
+        FROM user u
+        INNER JOIN tweet t
+        ON u.id = t.user_id
+        WHERE u.username=:username;
+    """
+
+    cursor = g.db.execute(query, {'username': username})
+
+    tweet = cursor.fetchall()
+
+    if tweet is None:
+        abort(404)
+
+    # get user data
+    u_id, username, first_name, last_name, birth_date, *_ = tweet[0]
+
+    # get tweet data
+    tweets = [
+        {
+            'date': python_date_to_json_str(sqlite_date_to_python(t[-3])),
+            'id': t[-2],
+            'text': t[-1],
+            'uri': '/tweet/{0}'.format(t[-2])
+        }
+        for t in tweet]
+
+    # create profile data
+    profile_data = {
+        'user_id': u_id,
+        'username': username,
+        'first_name': first_name,
+        'last_name': last_name,
+        'birth_date': birth_date,
+        'tweets': tweets,
+        'tweet_count': len(tweets),
+    }
+
+    content = json.dumps(profile_data)
+
+    return content, 200, {'Content-Type': JSON_MIME_TYPE}
+
+
 @app.errorhandler(404)
 def not_found(e):
     return '', 404
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
