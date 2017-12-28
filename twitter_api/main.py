@@ -141,8 +141,6 @@ def get_profile(username):
 
     tweet = cursor.fetchall()
 
-    print(tweet)
-
     # get user data
     u_id, username, first_name, last_name, birth_date, *_ = tweet[0]
 
@@ -159,7 +157,6 @@ def get_profile(username):
         ]
 
     # create profile data
-    print(tweets)
     profile_data = {
         'user_id': u_id,
         'username': username,
