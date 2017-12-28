@@ -5,6 +5,10 @@ from ..test_base import AuthorizedTwitterAPITestCase
 
 
 class TweetResource(AuthorizedTwitterAPITestCase):
+    """
+    Fake tweet data created in test_base.py
+    """
+
     def test_get_tweet_by_id_successful(self):
         response = self.client.get('/tweet/1')
 
