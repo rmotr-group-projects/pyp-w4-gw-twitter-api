@@ -175,32 +175,36 @@ def get_profile(username):
 @app.route('/profile', methods=['POST'])
 @json_only
 @auth_only
-def post_profile():
-    if 'content' not in request.json:
-        abort(400)
-    return
+def post_profile(user_id):
+
+    # !!! In the solution the query there isn't a WHERE condition. Isn't this important?
+    update_query = """
+            UPDATE user
+            SET
+                first_name=:first_name,
+                last_name=:last_name,
+                birth_date=:birth_date
+            WHERE id=:user_id;
+    """
+
+    # check that required user info are provided
+    for key in ['first_name', 'last_name', 'birth_date']:
+        if key not in request.json:
+            abort(400)
+
+    params = {
+        'first_name': request.json['first_name'],
+        'last_name': request.json['last_name'],
+        'birth_date': request.json['birth_date'],
+        'user_id': user_id
+    }
+
+    g.db.execute(update_query, params)
+    g.db.commit()
+
+    return '', 202
 
 
 @app.errorhandler(404)
 def not_found(e):
     return '', 404
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
