@@ -61,8 +61,8 @@ def tweet_post(user_id):
 
     user_id is given by the auth_only decorator
     """
-    if 'content' not in request.json:
-        abort(400)
+    # if 'content' not in request.json:
+    #     abort(400)
 
     insert_query = """
             INSERT INTO tweet ("user_id", "content")
@@ -170,6 +170,15 @@ def get_profile(username):
     content = json.dumps(profile_data)
 
     return content, 200, {'Content-Type': JSON_MIME_TYPE}
+
+
+@app.route('/profile', methods=['POST'])
+@json_only
+@auth_only
+def post_profile():
+    if 'content' not in request.json:
+        abort(400)
+    return
 
 
 @app.errorhandler(404)
