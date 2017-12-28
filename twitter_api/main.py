@@ -2,7 +2,7 @@ import sqlite3
 
 from flask import Flask, g, abort, request
 import json
-from .utils import (JSON_MIME_TYPE, auth_only, json_only, python_date_to_json_str, sqlite_date_to_python)
+from .utils import (JSON_MIME_TYPE, auth_only, json_only, python_date_to_json_str, sqlite_date_to_python, md5, generate_random_token)
 
 
 app = Flask(__name__)
@@ -204,9 +204,69 @@ def post_profile(user_id):
 
     return '', 202
 
-# NEXT:
-# make pull request for error in sql syntax (See Slack convo with Nikola)
-# Login implementation (uses the user database)
+# user submits (POST) username and password
+# API checks that user name and passwords checks out (found in user table)
+# if it does, give user an access token (found in )
+@app.route('/login', methods=['POST'])
+def login():
+
+    # check if username exists
+    check_username_query = """
+            SELECT u.id, u.username FROM user u
+            WHERE u.username=:username;
+    """
+
+    check_username_cursor = g.db.execute(check_username_query, {'username': request.json['username']})
+
+    user_info = check_username_cursor.fetchone()
+
+    print(user_info)
+
+    if user_info is None:
+        abort(404)
+
+    # check if password is missing
+    if 'password' not in request.json:
+        abort(400)
+
+    # check if password is correct
+    password_hashed = md5(request.json['password']).hexdigest()
+    check_password_query = """
+            SELECT u.password FROM user u
+            WHERE u.password=:password_hashed;
+    """
+
+    check_password_cursor = g.db.execute(check_password_query, {'password_hashed': password_hashed})
+
+    password_hashed = check_password_cursor.fetchone()
+
+    if password_hashed is None:
+        abort(401)
+
+    # if user exists and password is valid, generate access token
+    # insert or replace it in the auth table, then return it to user
+    new_access_token = generate_random_token()
+
+    insert_access_token_query = """
+            INSERT OR REPLACE INTO auth ("user_id", "access_token")
+            VALUES (:user_id, :access_token);
+    """
+
+    params = {
+        'user_id': user_info[0],
+        'access_token': new_access_token
+        }
+
+    g.db.execute(insert_access_token_query, params)
+    g.db.commit()
+
+    access_token_cursor = g.db.execute("SELECT a.access_token FROM auth a WHERE a.user_id=:user_id;", {"user_id": user_info[0]})
+
+    access_token_json = {
+        'access_token': access_token_cursor.fetchone()[0]
+    }
+
+    return json.dumps(access_token_json), 201
 
 
 @app.errorhandler(404)
