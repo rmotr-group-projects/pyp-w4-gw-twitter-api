@@ -1,4 +1,6 @@
 import hashlib
+import string
+import random
 from functools import wraps
 import datetime
 from flask import make_response, request, abort, g
@@ -6,12 +8,17 @@ from flask import make_response, request, abort, g
 JSON_MIME_TYPE = 'application/json'
 
 
+def generate_random_token(size=15):
+    chars = string.ascii_uppercase + string.digits
+    return ''.join(random.choice(chars) for _ in range(size))
+
+
 def md5(token):
     """
     Returns an md5 hash of a token passed as a string, performing an internal
     conversion of the token to bytes if run in Python 3
 
-    What is going on here ???
+    Intuition: You don't want the plaintext version of the password to be stored in the database. If someone where to gain access to the database, they would get your password and your account would now be comprimised. To avoid this, the passwords are first hashed (jumbled up) before being stored in the database. Thus, only the user himself knows the real, plaintext, password. In the database, only the hashed version of the password is stored. By construction, it is very difficult to derive the original plaintext password from its hash.
     """
     new_token = token
     if str != bytes:
