@@ -177,7 +177,6 @@ def get_profile(username):
 @auth_only
 def post_profile(user_id):
 
-    # !!! In the solution the query there isn't a WHERE condition. Isn't this important?
     update_query = """
             UPDATE user
             SET
@@ -204,9 +203,7 @@ def post_profile(user_id):
 
     return '', 202
 
-# user submits (POST) username and password
-# API checks that user name and passwords checks out (found in user table)
-# if it does, give user an access token (found in )
+
 @app.route('/login', methods=['POST'])
 def login():
 
@@ -219,8 +216,6 @@ def login():
     check_username_cursor = g.db.execute(check_username_query, {'username': request.json['username']})
 
     user_info = check_username_cursor.fetchone()
-
-    print(user_info)
 
     if user_info is None:
         abort(404)
