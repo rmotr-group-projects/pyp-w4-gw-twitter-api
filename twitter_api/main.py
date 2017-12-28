@@ -264,6 +264,20 @@ def login():
     return json.dumps(access_token_json), 201
 
 
+@app.route('/logout', methods=['POST'])
+@auth_only
+def logout(user_id):
+    delete_query = """
+            DELETE FROM auth
+            WHERE user_id=:user_id
+    """
+
+    g.db.execute(delete_query, {'user_id': user_id})
+    g.db.commit()
+
+    return '', 204
+
+
 @app.errorhandler(404)
 def not_found(e):
     return '', 404
