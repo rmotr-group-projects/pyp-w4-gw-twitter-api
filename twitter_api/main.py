@@ -115,16 +115,24 @@ def tweet_delete(user_id, tweet_id):
 @app.route('/profile/<username>')
 def get_profile(username):
 
-    # from user, need username, first_name, last_name, birth_date
-    # from tweet, need tweet id (id), created, content, url (which is /tweet/:id)
-    # need to create tweet count (len of tweets)
+    # check if user exists
+    check_query = """
+            SELECT *
+            FROM user u
+            WHERE u.username=:username;
+    """
+    check_cursor = g.db.execute(check_query, {'username': username})
 
+    if not check_cursor.fetchone():
+        abort(404)
+
+    # get data if user exists
     query = """
         SELECT
             u.id, u.username, u.first_name, u.last_name, u.birth_date,
             t.created, t.id, t.content
         FROM user u
-        INNER JOIN tweet t
+        LEFT JOIN tweet t
         ON u.id = t.user_id
         WHERE u.username=:username;
     """
@@ -133,8 +141,7 @@ def get_profile(username):
 
     tweet = cursor.fetchall()
 
-    if tweet is None:
-        abort(404)
+    print(tweet)
 
     # get user data
     u_id, username, first_name, last_name, birth_date, *_ = tweet[0]
@@ -147,9 +154,12 @@ def get_profile(username):
             'text': t[-1],
             'uri': '/tweet/{0}'.format(t[-2])
         }
-        for t in tweet]
+        for t in tweet
+        if all([t[-3], t[-2], t[-1]])  # include in list if all tweet data are nonempty
+        ]
 
     # create profile data
+    print(tweets)
     profile_data = {
         'user_id': u_id,
         'username': username,
