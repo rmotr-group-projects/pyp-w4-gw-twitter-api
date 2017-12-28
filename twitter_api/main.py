@@ -260,8 +260,8 @@ def login():
     g.db.execute(insert_access_token_query, params)
     g.db.commit()
 
+    # return access token
     access_token_cursor = g.db.execute("SELECT a.access_token FROM auth a WHERE a.user_id=:user_id;", {"user_id": user_info[0]})
-
     access_token_json = {
         'access_token': access_token_cursor.fetchone()[0]
     }
