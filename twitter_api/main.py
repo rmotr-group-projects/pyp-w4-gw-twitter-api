@@ -73,7 +73,7 @@ def logout(user_id):
 @app.route('/tweet/<int:tweet_id>')
 def get_tweet(tweet_id):
     query = """SELECT t.id, t.content, t.created, u.username
-        FROM tweet t INNER JOIN user u ON u.id == t.id
+        FROM tweet t INNER JOIN user u ON u.id == t.user_id
         WHERE t.id=:tweet_id;
     """
 
