@@ -204,6 +204,10 @@ def post_profile(user_id):
 
     return '', 202
 
+# NEXT:
+# make pull request for error in sql syntax (See Slack convo with Nikola)
+# Login implementation (uses the user database)
+
 
 @app.errorhandler(404)
 def not_found(e):

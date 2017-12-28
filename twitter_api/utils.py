@@ -20,10 +20,14 @@ def md5(token):
 
 
 def sqlite_date_to_python(date_str):
+    if date_str is None:
+        return None
     return datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
 
 
 def python_date_to_json_str(dt):
+    if dt is None:
+        return None
     return dt.strftime("%Y-%m-%dT%H:%M:%S")
 
 
