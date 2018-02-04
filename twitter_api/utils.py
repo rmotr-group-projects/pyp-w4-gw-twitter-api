@@ -1,3 +1,7 @@
+"""
+This module contains some utility functions for use in main.py.
+"""
+
 from functools import wraps
 from datetime import datetime
 from flask import make_response, request, abort, g

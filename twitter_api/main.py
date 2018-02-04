@@ -1,3 +1,8 @@
+"""
+This project turns the Twitter Clone project (found at https://github.com/keving90/pyp-u6-c1-flask-twitter-clone) 
+into a RESTful API. All of the data is encoded as JSON.
+"""
+
 import sqlite3
 from flask import Flask, g, make_response, abort, request, session
 from twitter_api.utils import (sqlite_date_to_python, python_date_to_json_str, 
@@ -10,11 +15,13 @@ app = Flask(__name__)
 JSON_MIME_TYPE = 'application/json'
 
 def connect_db(db_name):
+    """Connects to the database."""
     return sqlite3.connect(db_name)
 
 
 @app.before_request
 def before_request():
+    """Connects to the database before a request is made."""
     g.db = connect_db(app.config['DATABASE'])
 
 
@@ -99,7 +106,7 @@ def logout():
 
 @app.route('/profile/<username>')
 def get_profile(username):
-    """Gets the profile is a specific user."""
+    """Gets the profile of a specific user."""
     
     # Get the user's info
     user_query = 'SELECT * FROM user WHERE username=:username;'
