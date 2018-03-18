@@ -1,4 +1,4 @@
-This program is a Twitter clone RESTful API web service. It is part of rmotr.com's Advanced Python Programming online bootcamp.
+This program is a Twitter clone RESTful API web service. It is part of rmotr.com's Advanced Python Programming online bootcamp. The main program can be found in the `twitter_api` folder.
 
 # [pyp-w4] Twitter API
 
