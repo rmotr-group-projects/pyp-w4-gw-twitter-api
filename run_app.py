@@ -1,3 +1,7 @@
+"""
+This module is used to run the Twitter API.
+"""
+
 import os
 
 from twitter_api.main import app
